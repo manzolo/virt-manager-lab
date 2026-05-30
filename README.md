@@ -18,7 +18,7 @@ virt-manager-lab/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
 │   ├── win10/
-│   │   ├── create_win10_vm.sh     # Windows 10 con autounattend (WIP)
+│   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
 │   └── win11/
 │       ├── create_win11_vm.sh     # Windows 11 con autounattend
@@ -164,7 +164,7 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | ubuntu24.04 | Ubuntu 24.04.3 LTS | GNOME 46, HWE kernel, virtiofs |
 | ubuntu26.04 | Ubuntu 26.04 LTS | GNOME 50, HWE kernel, virtiofs |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
-| Windows10 | Windows 10 | autounattend WIP, virtiofs, full virtio |
+| Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |
 | Windows7/XP/98/95/NT | Windows legacy | per test compatibilità |
 | pfSense | pfSense | firewall/router |

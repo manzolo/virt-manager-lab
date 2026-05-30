@@ -5,9 +5,9 @@
 | Campo   | Valore                                   |
 |---------|------------------------------------------|
 | Nome    | Windows10                                |
-| UUID    | 20c1df90-5ca2-4ebb-bc40-4df232e1dae2    |
+| UUID    | d0b5d907-a011-447f-a6b3-1f29b8212da2    |
 | OS      | Windows 10                               |
-| Stato   | terminato                                |
+| Stato   | installata e funzionante ✓               |
 
 ## Hardware
 
@@ -16,8 +16,8 @@
 | RAM       | 4 GB (4194304 KiB)                    |
 | vCPU      | 2                                     |
 | Arch      | x86_64                                |
-| Machine   | pc-q35-7.0                            |
-| Firmware  | BIOS                                  |
+| Machine   | pc-q35-10.2                          |
+| Firmware  | UEFI OVMF                             |
 | CPU mode  | host-passthrough                      |
 | Clock     | localtime (Windows)                   |
 | Memory    | memfd + shared (richiesto da virtiofs)|
@@ -27,16 +27,15 @@
 
 | Dispositivo | File                                                           | Bus    | Formato | Dimensione |
 |-------------|----------------------------------------------------------------|--------|---------|------------|
-| sda (disco) | `/home/manzolo/Workspaces/qemu/storage/hd/windows10.qcow2`    | virtio | qcow2   | 33 GB      |
-| sdb (cdrom) | —                                                              | sata   | raw     | —          |
+| vda (disco) | `/home/manzolo/Workspaces/qemu/storage/hd/windows10.qcow2`    | virtio | qcow2   | 60 GB      |
+| sda (cdrom) | `storage/Iso/Windows/Windows10-autounattend-noprompt.iso`     | sata   | raw     | —          |
+| sdb (cdrom) | `storage/Iso/addons/virtio-win-0.1.285.iso`                   | sata   | raw     | —          |
 
 ## Rete
 
 | NIC | MAC               | Modello | Rete    | Stato |
 |-----|-------------------|---------|---------|-------|
-| 1   | 52:54:00:58:64:24 | e1000e  | default | down  |
-
-> Interfaccia di rete configurata come `link state='down'`.
+| 1   | 52:54:00:47:59:50 | virtio  | default | up    |
 
 ## Video & Audio
 
@@ -57,35 +56,45 @@
 > Richiede WinFSP installato nel guest per montare il filesystem virtiofs.  
 > Richiede `<memoryBacking><source type='memfd'/><access mode='shared'/></memoryBacking>`.
 
-## Stato sistema (rilevato offline via virt-inspector)
+## Stato sistema
 
 | Campo       | Valore                          |
 |-------------|---------------------------------|
-| OS rilevato | Windows 10 Pro                  |
-| Hostname    | DESKTOP-1MK94ND                 |
-| App rilevate| 13                              |
+| OS rilevato | Windows 10 Pro 10.0.19042       |
+| Hostname    | Windows10-Lab                   |
+| Disco usato | 11 GB / 60 GB                   |
+| Unità Z:    | virtiofs shared (1158 GB)       |
+| Testato il  | 2026-05-30 ✓                    |
+
+### Servizi verificati via guest-agent
+
+| Servizio     | Stato                  |
+|--------------|------------------------|
+| QEMU-GA      | Running, Automatic ✓   |
+| spice-agent  | Running, Automatic ✓   |
+| VirtioFsSvc  | Running, Automatic ✓   |
 
 ### Applicazioni installate
 
 | Applicazione               | Versione         |
 |----------------------------|------------------|
-| 7-Zip                      | 24.01            |
-| Microsoft Edge             | 122.0.2365.92    |
-| Mozilla Firefox (it, x64)  | 123.0.1          |
-| Notepad++                  | 8.6.4            |
-| WinFSP (`{E4C768C9...}`)   | 2.0.23075        |
-| MozillaMaintenanceService  | 123.0.1          |
-| Microsoft EdgeWebView      | 122.0.2365.92    |
+| Mozilla Firefox (x64 it)   | 151.0.2          |
+| Notepad++ (64-bit x64)     | 8.6.4            |
+| QEMU guest agent           | 106.0.1          |
+| Virtio-win-driver-installer| 0.1.240          |
+| Virtio-win-guest-tools     | 0.1.240          |
+| Spice Agent                | 0.10.5           |
+| WinFSP 2023                | 2.0.23075        |
 
-> WinFSP presente → necessario per il mount virtiofs della cartella shared.  
-> Hostname **DESKTOP-1MK94ND** (stesso di Windows10_Cisco — clonate dalla stessa immagine).
+> Verifica del 2026-05-30: Firefox e Notepad++ presenti nel registro programmi.
+> `C:\install-tools.log` riporta exit code 0 per VirtIO guest tools, WinFSP, Firefox e Notepad++.
 
 ## Note
 
 - Watchdog: itco
 - Memballoon: virtio
-- Nessun QEMU guest agent Windows configurato
-- **Stessa immagine base di Windows10_Cisco** (hostname identico)
+- QEMU guest agent configurato e rispondente
+- Reinstallata da zero il 2026-05-30 con ISO unattended noprompt
 - Script unattended: `scripts/win10/create_win10_vm.sh`
 - Risposte setup: `scripts/win10/autounattend.xml`
 - ISO generata: `storage/Iso/Windows/Windows10-autounattend-noprompt.iso`

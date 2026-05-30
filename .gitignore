@@ -13,6 +13,10 @@
 *.log
 *.tmp
 *~
+*.png
+
+# Report generati (usa scripts/vm-report.sh per ricrearli)
+vm-report.html
 
 # Cartelle di build temporanee
 win11_unattend_src/

@@ -14,6 +14,9 @@ virt-manager-lab/
 │   ├── install-debian13.sh        # Debian 13 unattended (preseed)
 │   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
 │   ├── install-ubuntu26.04.sh     # Ubuntu 26.04 LTS unattended (autoinstall)
+│   ├── win10/
+│   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
+│   │   └── autounattend.xml       # risposta automatica setup Win10
 │   └── win11/
 │       ├── create_win11_vm.sh     # Windows 11 con autounattend
 │       └── autounattend.xml       # risposta automatica setup Win11
@@ -158,12 +161,33 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | ubuntu24.04 | Ubuntu 24.04.3 LTS | GNOME 46, HWE kernel, virtiofs |
 | ubuntu26.04 | Ubuntu 26.04 LTS | GNOME 50, HWE kernel, virtiofs |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
-| Windows10 | Windows 10 | Q35, virtiofs (WinFSP) |
+| Windows10 | Windows 10 | autounattend, virtiofs, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |
 | Windows7/XP/98/95/NT | Windows legacy | per test compatibilità |
 | pfSense | pfSense | firewall/router |
 | pi-hole | Ubuntu | ad-blocking DNS |
 | … | … | vedi `vms/` |
+
+---
+
+## Report HTML inventario VM
+
+Lo script `scripts/vm-report.sh` interroga libvirt e `qemu-img` e genera un file HTML
+self-contained con la mappa filtrabile di tutte le VM.
+
+```bash
+bash scripts/vm-report.sh              # → vm-report.html nella directory corrente
+bash scripts/vm-report.sh /tmp/report.html
+```
+
+Il report include:
+- Stato (in esecuzione / ferma)
+- OS family (Linux / Windows / Altro)
+- RAM, vCPU, lista dischi con nome file
+- Disco virtuale vs disco usato con barra di utilizzo
+- Totali aggregati in cima
+- Filtri per stato e OS + casella di ricerca per nome
+- Ordinamento per colonna (click sull'intestazione)
 
 ---
 

@@ -1,0 +1,43 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            xorriso python3-yaml libxml2-utils
+
+      - name: Shell syntax
+        run: |
+          bash -n scripts/install-ubuntu24.04.sh
+          bash -n scripts/install-ubuntu26.04.sh
+          bash -n scripts/install-debian13.sh
+          bash -n scripts/win11/create_win11_vm.sh
+
+      - name: YAML autoinstall syntax
+        run: |
+          python3 -c "import yaml; yaml.safe_load(open('ubuntu24.04-autoinstall.yaml'))" \
+            && echo "ubuntu24.04-autoinstall.yaml OK"
+          python3 -c "import yaml; yaml.safe_load(open('ubuntu26.04-autoinstall.yaml'))" \
+            && echo "ubuntu26.04-autoinstall.yaml OK"
+
+      - name: XML syntax (autounattend)
+        run: xmllint --noout scripts/win11/autounattend.xml && echo "autounattend.xml OK"
+
+      - name: Required files present
+        run: |
+          test -f Debian13-preseed.cfg           && echo "Debian13-preseed.cfg OK"
+          test -f ubuntu24.04-autoinstall.yaml   && echo "ubuntu24.04-autoinstall.yaml OK"
+          test -f ubuntu26.04-autoinstall.yaml   && echo "ubuntu26.04-autoinstall.yaml OK"
+          test -f scripts/win11/autounattend.xml && echo "autounattend.xml OK"

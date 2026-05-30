@@ -112,7 +112,62 @@
         </OSImage>
       </ImageInstall>
 
+      <!-- Bypass requisiti Windows 11 in VM QEMU/KVM se il setup non riconosce l'hardware virtuale -->
+      <RunSynchronous>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassTPMCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassSecureBootCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>3</Order>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassCPUCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>4</Order>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassRAMCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+        <RunSynchronousCommand wcm:action="add">
+          <Order>5</Order>
+          <Path>reg add HKLM\SYSTEM\Setup\LabConfig /v BypassStorageCheck /t REG_DWORD /d 1 /f</Path>
+        </RunSynchronousCommand>
+      </RunSynchronous>
+
     </component>
+
+    <!-- Driver virtio: iniettati in WinPE così il setup vede subito il disco e la rete.
+         La virtio ISO è montata come secondo CD-ROM → E: (D: = Windows ISO).
+         Con bus=virtio sul disco, senza viostor WinPE non trova nessun disco su cui installare. -->
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral" versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <DriverPaths>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>E:\viostor\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>D:\viostor\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>F:\viostor\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>E:\NetKVM\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+          <Path>D:\NetKVM\w11\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+          <Path>F:\NetKVM\w11\amd64</Path>
+        </PathAndCredentials>
+      </DriverPaths>
+    </component>
+
   </settings>
 
   <!-- FASE 2: Specializzazione (primo avvio) -->
@@ -184,22 +239,28 @@
         <LogonCount>1</LogonCount>
       </AutoLogon>
 
-      <!-- Script post-installazione: installa VirtIO guest tools dalla shared folder -->
+      <!-- Script post-installazione: installa strumenti dai supporti montati -->
       <FirstLogonCommands>
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
-          <Description>Installa VirtIO guest tools</Description>
-          <CommandLine>cmd /c start /wait msiexec /i "E:\virtio-win-gt-x64.msi" /qn /norestart</CommandLine>
+          <Description>Installa VirtIO driver (MSI)</Description>
+          <CommandLine>powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Get-PSDrive -PSProvider FileSystem | ForEach-Object { Join-Path $_.Root 'virtio-win-gt-x64.msi' } | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($p) { Start-Process msiexec.exe -ArgumentList '/i', $p, '/qn', '/norestart' -Wait }"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <Description>Installa WinFSP per virtiofs</Description>
-          <CommandLine>cmd /c start /wait msiexec /i "Z:\winfsp-2.0.23075.msi" /qn /norestart</CommandLine>
+          <Description>Installa VirtIO guest tools (guest agent + SPICE)</Description>
+          <CommandLine>powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Get-PSDrive -PSProvider FileSystem | ForEach-Object { Join-Path $_.Root 'virtio-win-guest-tools.exe' } | Where-Object { Test-Path $_ } | Select-Object -First 1; if ($p) { Start-Process $p -ArgumentList '/install', '/quiet', '/norestart' -Wait }"</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>3</Order>
+          <Description>Installa WinFSP per virtiofs</Description>
+          <CommandLine>powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = Get-PSDrive -PSProvider FileSystem | ForEach-Object { Join-Path $_.Root 'tools\winfsp-2.0.23075.msi' } | Where-Object { Test-Path $_ } | Select-Object -First 1; if (-not $p) { $p = Get-PSDrive -PSProvider FileSystem | ForEach-Object { Join-Path $_.Root 'winfsp-2.0.23075.msi' } | Where-Object { Test-Path $_ } | Select-Object -First 1 }; if ($p) { Start-Process msiexec.exe -ArgumentList '/i', $p, '/qn', '/norestart' -Wait }"</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>4</Order>
           <Description>Monta cartella condivisa virtiofs</Description>
           <CommandLine>cmd /c sc config VirtioFsSvc start= auto &amp; net start VirtioFsSvc</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>

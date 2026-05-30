@@ -1,73 +1,136 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Crea la VM Windows 11 con installazione non presidiata.
 #
-# Prerequisiti:
-#   - ISO in: storage/Iso/Windows/Win11_24H2_Italian_x64.iso
-#   - autounattend.xml nella stessa cartella di questo script
-#   - virtio-win ISO in: storage/Iso/addons/virtio-win-0.1.285.iso
-#   - winfsp-2.0.23075.msi in: storage/shared/
+# Strategia ISO:
+#   - estrae la ISO originale di Windows 11;
+#   - integra autounattend.xml alla radice;
+#   - ricrea una ISO avviabile con efisys_noprompt.bin, evitando
+#     "Press any key to boot from CD/DVD" e i puntini in attesa input;
+#   - usa ordine boot hd,cdrom: il disco vuoto cade sul CD al primo boot,
+#     poi i riavvii continuano dal disco installato.
 #
 # Uso: bash scripts/win11/create_win11_vm.sh
+#      bash scripts/win11/create_win11_vm.sh --iso-only
+#      echo S | bash scripts/win11/create_win11_vm.sh   (non interattivo)
 
-set -e
+set -euo pipefail
 
+VM_NAME="Windows11"
 STORAGE="/home/manzolo/Workspaces/qemu/storage"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-ISO_WIN11="$STORAGE/Iso/Windows/Win11_24H2_Italian_x64.iso"
+ISO_ORIG="$STORAGE/Iso/Windows/Win11_24H2_Italian_x64.iso"
+ISO_AUTO="$STORAGE/Iso/Windows/Win11_24H2_Italian_x64-autounattend-noprompt.iso"
 ISO_VIRTIO="$STORAGE/Iso/addons/virtio-win-0.1.285.iso"
 DISK="$STORAGE/hd/Windows11.qcow2"
+DISK_SIZE="60G"
 AUTOUNATTEND="$SCRIPT_DIR/autounattend.xml"
-UNATTEND_ISO="$SCRIPT_DIR/win11_autounattend.iso"
-UNATTEND_DIR="$SCRIPT_DIR/win11_unattend_src"
+SHARED_DIR="$STORAGE/shared"
+BUILD_DIR="/tmp/win11-iso-build"
+ISO_ONLY=0
 
-# Verifica prerequisiti
-for f in "$ISO_WIN11" "$ISO_VIRTIO" "$AUTOUNATTEND"; do
-    [ -f "$f" ] || { echo "Mancante: $f"; exit 1; }
+if [[ "${1:-}" == "--iso-only" ]]; then
+    ISO_ONLY=1
+elif [[ $# -gt 0 ]]; then
+    echo "Uso: $0 [--iso-only]"
+    exit 1
+fi
+
+for cmd in 7z xorriso qemu-img virt-install virsh; do
+    command -v "$cmd" >/dev/null || { echo "Comando mancante: $cmd"; exit 1; }
 done
 
-# Crea una mini-ISO con autounattend.xml alla radice
-# Windows Setup scansiona tutti i CD/DVD montati e trova il file automaticamente
-echo "[*] Creo ISO con autounattend.xml..."
-rm -rf "$UNATTEND_DIR" && mkdir -p "$UNATTEND_DIR"
-cp "$AUTOUNATTEND" "$UNATTEND_DIR/autounattend.xml"
-genisoimage -o "$UNATTEND_ISO" -J -r -V "UNATTEND" "$UNATTEND_DIR" 2>/dev/null
-echo "    → $UNATTEND_ISO"
+for f in "$ISO_ORIG" "$ISO_VIRTIO" "$AUTOUNATTEND" "$SHARED_DIR/winfsp-2.0.23075.msi"; do
+    [[ -f "$f" ]] || { echo "Mancante: $f"; exit 1; }
+done
 
-# Crea disco virtuale (60 GB)
-echo "[*] Creo disco Windows11.qcow2 (60 GB)..."
-[ -f "$DISK" ] && { echo "Disco già esistente: $DISK"; exit 1; }
-qemu-img create -f qcow2 -o preallocation=off "$DISK" 60G
+echo "[*] Preparo ISO Windows 11 unattended senza prompt di boot..."
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+7z x -y "-o$BUILD_DIR" "$ISO_ORIG" >/dev/null
+cp "$AUTOUNATTEND" "$BUILD_DIR/autounattend.xml"
+mkdir -p "$BUILD_DIR/tools"
+cp "$SHARED_DIR/winfsp-2.0.23075.msi" "$BUILD_DIR/tools/winfsp-2.0.23075.msi"
 
-# Crea la VM
-echo "[*] Creo VM Windows11..."
+if [[ -f "$BUILD_DIR/efi/microsoft/boot/efisys_noprompt.bin" ]]; then
+    EFI_BOOT_IMAGE="efi/microsoft/boot/efisys_noprompt.bin"
+else
+    echo "Attenzione: efisys_noprompt.bin non trovato, uso efisys.bin."
+    EFI_BOOT_IMAGE="efi/microsoft/boot/efisys.bin"
+fi
+
+if [[ -f "$BUILD_DIR/boot/bootfix.bin" ]]; then
+    : > "$BUILD_DIR/boot/bootfix.bin"
+fi
+
+rm -f "$ISO_AUTO"
+xorriso -as mkisofs \
+    -iso-level 3 \
+    -J \
+    -joliet-long \
+    -relaxed-filenames \
+    -V "CCCOMA_X64FRE_IT-IT_DV9" \
+    -o "$ISO_AUTO" \
+    -b boot/etfsboot.com \
+    -no-emul-boot \
+    -boot-load-size 8 \
+    -eltorito-alt-boot \
+    -e "$EFI_BOOT_IMAGE" \
+    -no-emul-boot \
+    "$BUILD_DIR" >/dev/null
+
+rm -rf "$BUILD_DIR"
+echo "    -> $ISO_AUTO"
+
+if [[ "$ISO_ONLY" -eq 1 ]]; then
+    echo "[+] ISO pronta. Nessuna VM creata perche' e' stato usato --iso-only."
+    exit 0
+fi
+
+if virsh dominfo "$VM_NAME" &>/dev/null; then
+    echo "La VM '$VM_NAME' esiste gia'."
+    read -rp "Vuoi eliminarla e reinstallare? [S/n] " risposta
+    risposta="${risposta:-S}"
+    if [[ ! "$risposta" =~ ^[sS]$ ]]; then
+        echo "Installazione annullata."
+        exit 0
+    fi
+
+    echo "Fermo e rimuovo la VM..."
+    virsh destroy "$VM_NAME" 2>/dev/null || true
+    virsh undefine "$VM_NAME" --snapshots-metadata --nvram 2>/dev/null || \
+    virsh undefine "$VM_NAME" --snapshots-metadata 2>/dev/null || true
+fi
+
+echo "[*] Creo disco $DISK ($DISK_SIZE)..."
+rm -f "$DISK"
+qemu-img create -f qcow2 -o preallocation=off "$DISK" "$DISK_SIZE"
+virsh pool-refresh hdd 2>/dev/null || true
+
+echo "[*] Creo e avvio VM $VM_NAME..."
 virt-install \
-    --name Windows11 \
+    --name "$VM_NAME" \
     --memory 8192 \
     --vcpus 4 \
     --os-variant win11 \
-    --machine pc-q35-8.2 \
-    --boot loader=/usr/share/OVMF/OVMF_CODE_4M.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.fd,cdrom,hd \
-    --disk path="$DISK",bus=sata,format=qcow2,discard=unmap \
-    --disk path="$ISO_WIN11",device=cdrom,bus=sata \
+    --machine q35 \
+    --cpu host-passthrough \
+    --boot loader=/usr/share/OVMF/OVMF_CODE_4M.fd,loader.readonly=yes,loader.type=pflash,nvram.template=/usr/share/OVMF/OVMF_VARS_4M.fd,hd,cdrom \
+    --disk path="$DISK",bus=virtio,format=qcow2,discard=unmap \
+    --disk path="$ISO_AUTO",device=cdrom,bus=sata \
     --disk path="$ISO_VIRTIO",device=cdrom,bus=sata \
-    --disk path="$UNATTEND_ISO",device=cdrom,bus=sata \
-    --filesystem source="$STORAGE/shared",target=shared,driver.type=virtiofs \
+    --filesystem source="$SHARED_DIR",target=shared,driver.type=virtiofs \
     --memorybacking source.type=memfd,access.mode=shared \
-    --network network=default,model=e1000e \
+    --network network=default,model=virtio \
     --tpm emulator,model=tpm-crb,version=2.0 \
     --graphics spice,listen=none \
     --video qxl \
     --channel unix,target.type=virtio,target.name=org.qemu.guest_agent.0 \
-    --noautoconsole \
-    --boot bootmenu.enable=on
+    --noautoconsole
 
 echo ""
-echo "[+] VM Windows11 creata. Avvio installazione..."
-echo "    Connettiti con: virt-viewer Windows11"
+echo "[+] VM $VM_NAME avviata, installazione in corso."
+echo "    Connettiti con: virt-viewer $VM_NAME"
 echo ""
-echo "    Al termine dell'installazione:"
-echo "    1. Il sistema si riavvia automaticamente"
-echo "    2. Il primo login è automatico come 'manzolo'"
-echo "    3. VirtIO guest tools vengono installati in automatico"
-echo "    4. WinFSP viene installato dalla cartella shared (Z:)"
+echo "    La ISO generata non chiede piu' di premere un tasto."
+echo "    Ai riavvii successivi il boot passa al disco Windows."

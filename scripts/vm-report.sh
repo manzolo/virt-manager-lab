@@ -338,3 +338,5 @@ print(f"  In esecuzione: {n_run}")
 print(f"  Disco virtuale tot.: {tot_v} GB")
 print(f"  Disco usato tot.  : {tot_a} GB")
 PYEOF
+
+xdg-open "$OUTPUT" 2>/dev/null || open "$OUTPUT" 2>/dev/null || true

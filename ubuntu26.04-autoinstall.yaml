@@ -1,0 +1,79 @@
+#cloud-config
+# =============================================================================
+# Ubuntu 26.04 LTS — Autoinstall unattended
+# Target VM: ubuntu26.04
+# Replica: GNOME, bpfcc/bpftrace, openvpn, virtiofs shared, HWE kernel
+# =============================================================================
+autoinstall:
+  version: 1
+
+  # --- Localizzazione ---------------------------------------------------------
+  locale: it_IT.UTF-8
+  keyboard:
+    layout: it
+    variant: ''
+
+  # --- Identità ---------------------------------------------------------------
+  identity:
+    hostname: ubuntu26
+    realname: Manzolo
+    username: manzolo
+    # Hash generato con: openssl passwd -6 "manzolo"
+    password: '$6$xAz1OOYvRK3.5IdZ$sgTB7qeJUZ7QG62n2AGN146CRBfwwAeWMYHdLZk/sZYSvWub.APwbCwMfSnbteh7/78mWFWzHFoxEZgwV/T/H/'
+
+  # --- Rete (DHCP automatico) -------------------------------------------------
+  network:
+    network:
+      version: 2
+      ethernets:
+        any:
+          match:
+            name: 'en*'
+          dhcp4: true
+
+  # --- Storage (LVM su disco più grande) -------------------------------------
+  storage:
+    layout:
+      name: lvm
+      match:
+        size: largest
+
+  # --- SSH (non necessario per VM desktop) ------------------------------------
+  ssh:
+    install-server: false
+
+  # --- Pacchetti aggiuntivi ---------------------------------------------------
+  # GNOME Desktop è incluso nell'ISO desktop; qui solo i pacchetti extra
+  packages:
+    - bpfcc-tools
+    - bpftrace
+    - python3-bpfcc
+    - openvpn
+    - network-manager-openvpn
+    - network-manager-openvpn-gnome
+    - spice-vdagent
+    - qemu-guest-agent
+    - bind9-dnsutils
+    - aspell
+    - aspell-en
+    - linux-generic-hwe-26.04
+
+  # --- Comandi post-installazione ---------------------------------------------
+  late-commands:
+    - curtin in-target -- systemctl enable qemu-guest-agent
+    - curtin in-target -- systemctl enable spice-vdagent
+    - curtin in-target -- mkdir -p /mnt/shared
+    - curtin in-target -- bash -c 'printf "host_shared\t/mnt/shared\tvirtiofs\tnofail,x-systemd.automount,x-systemd.idle-timeout=60\t0\t0\n" >> /etc/fstab'
+    # Ubuntu Desktop crea l'utente dopo queste late-commands: usa /etc/skel.
+    # Non rimuovere gnome-initial-setup qui: ubuntu-desktop-bootstrap lo tratta
+    # come errore durante la sessione live.
+    - curtin in-target -- mkdir -p /etc/skel/.config/gtk-3.0 /etc/skel/Scrivania /etc/skel/Desktop
+    - curtin in-target -- touch /etc/skel/.config/gnome-initial-setup-done
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/shared
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Scrivania/shared
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Desktop/shared
+    - curtin in-target -- bash -c 'printf "file:///mnt/shared shared\n" >> /etc/skel/.config/gtk-3.0/bookmarks'
+    - curtin in-target -- bash -c 'if [ -d /home/manzolo ]; then mkdir -p /home/manzolo/.config/gtk-3.0 /home/manzolo/Scrivania /home/manzolo/Desktop; chown -R manzolo:manzolo /home/manzolo/.config /home/manzolo/Scrivania /home/manzolo/Desktop; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Scrivania/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Desktop/shared; grep -qxF "file:///mnt/shared shared" /home/manzolo/.config/gtk-3.0/bookmarks 2>/dev/null || printf "file:///mnt/shared shared\n" >> /home/manzolo/.config/gtk-3.0/bookmarks; chown -R manzolo:manzolo /home/manzolo/.config; fi'
+
+  # Spegni invece di riavviare (virt-install usa --noreboot)
+  shutdown: poweroff

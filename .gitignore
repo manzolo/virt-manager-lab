@@ -1,0 +1,18 @@
+# Immagini disco VM
+*.qcow2
+*.vhd
+*.vmdk
+*.vdi
+*.raw
+
+# ISO e immagini floppy
+*.iso
+*.img
+
+# Artefatti temporanei
+*.log
+*.tmp
+*~
+
+# Cartelle di build temporanee
+win11_unattend_src/

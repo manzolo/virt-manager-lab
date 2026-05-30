@@ -7,7 +7,7 @@
 | Nome    | ubuntu24.04                              |
 | UUID    | assegnato dinamicamente alla creazione   |
 | OS      | Ubuntu 24.04 LTS (Noble Numbat)          |
-| Stato   | terminato                                |
+| Stato   | installata e funzionante ✓               |
 
 ## Hardware
 
@@ -80,12 +80,25 @@ mount -t virtiofs host_shared /mnt/shared
 
 ## Stato sistema
 
-| Campo       | Valore                                  |
-|-------------|-----------------------------------------|
-| OS rilevato | Ubuntu 24.04 LTS                        |
-| Hostname    | ubuntu24                                |
-| Kernel      | 6.14.0-33-generic (HWE)                 |
-| Pacchetti   | 1585 (apt)                              |
+| Campo       | Valore                                        |
+|-------------|-----------------------------------------------|
+| OS rilevato | Ubuntu 24.04.3 LTS (Noble Numbat)             |
+| Hostname    | ubuntu24                                      |
+| Kernel      | 6.17.0-35-generic (HWE 6.17.0-35.35~24.04.1) |
+| IP (DHCP)   | 192.168.122.131 (libvirt default)             |
+| GNOME       | Shell 46.0                                    |
+| Disco usato | 8.7 GB / 19 GB LVM (51%)                      |
+| Testato il  | 2026-05-30 ✓                                  |
+
+### virtiofs verificato
+
+| Check                          | Esito |
+|--------------------------------|-------|
+| `/mnt/shared` accessibile      | ✓     |
+| `~/shared` → `/mnt/shared`     | ✓     |
+| `~/Desktop/shared`             | ✓     |
+| `~/Scrivania/shared`           | ✓     |
+| GTK bookmark `/mnt/shared`     | ✓     |
 
 ### Pacchetti notevoli
 

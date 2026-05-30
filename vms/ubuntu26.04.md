@@ -7,7 +7,7 @@
 | Nome    | ubuntu26.04                              |
 | UUID    | assegnato dinamicamente alla creazione   |
 | OS      | Ubuntu 26.04 LTS                         |
-| Stato   | non installata (script pronto, ISO mancante) |
+| Stato   | installata e funzionante ✓                   |
 
 ## Hardware
 
@@ -16,7 +16,7 @@
 | RAM       | 4 GB (4194304 KiB)                                  |
 | vCPU      | 2                                                   |
 | Arch      | x86_64                                              |
-| Machine   | q35 (versione rilevata all'installazione)           |
+| Machine   | pc-q35-9.2                                          |
 | Firmware  | EFI (OVMF, senza Secure Boot enrollato dallo script)|
 | NVRAM     | `/var/lib/libvirt/qemu/nvram/ubuntu26.04_VARS.fd`   |
 | CPU mode  | host-passthrough                                    |
@@ -132,6 +132,29 @@ Il passo 4 (fallback diretto sulla home) è assente nel YAML 24.04.
 ### os-variant
 
 Lo script rileva automaticamente: prova `ubuntu26.04`, fallback a `ubuntu25.10`.
+Al test del 2026-05-30 ha usato il fallback `ubuntu25.10` (non ancora nel db osinfo).
+
+## Stato sistema
+
+| Campo       | Valore                                      |
+|-------------|---------------------------------------------|
+| OS rilevato | Ubuntu 26.04 LTS (Resolute Raccoon)         |
+| Hostname    | ubuntu26                                    |
+| Kernel      | 7.0.0-22-generic (HWE 7.0.0-22.22)         |
+| IP (DHCP)   | 192.168.122.76 (libvirt default)            |
+| GNOME       | Shell 50.1                                  |
+| Disco usato | 9.4 GB / 19 GB LVM (55%)                   |
+| Testato il  | 2026-05-30 ✓                                |
+
+### virtiofs verificato
+
+| Check                          | Esito |
+|--------------------------------|-------|
+| `/mnt/shared` accessibile      | ✓     |
+| `~/shared` → `/mnt/shared`     | ✓     |
+| `~/Desktop/shared`             | ✓     |
+| `~/Scrivania/shared`           | ✓     |
+| GTK bookmark `/mnt/shared`     | ✓     |
 
 ## Note
 

@@ -38,7 +38,6 @@ autoinstall:
     install-server: false
 
   packages:
-    - lubuntu-desktop
     - qemu-guest-agent
     - spice-vdagent
     - openvpn
@@ -53,6 +52,7 @@ autoinstall:
     - linux-generic-hwe-20.04
 
   late-commands:
+    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop
     - curtin in-target -- systemctl set-default graphical.target
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent

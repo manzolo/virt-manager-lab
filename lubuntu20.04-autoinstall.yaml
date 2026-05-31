@@ -37,6 +37,15 @@ autoinstall:
   ssh:
     install-server: false
 
+  # Ubuntu 20.04 e' EOL (apr 2025): i pacchetti sono su old-releases, non su archive
+  apt:
+    primary:
+      - arches: [default]
+        uri: http://old-releases.ubuntu.com/ubuntu
+    security:
+      - arches: [default]
+        uri: http://old-releases.ubuntu.com/ubuntu
+
   packages:
     - qemu-guest-agent
     - spice-vdagent

@@ -83,6 +83,45 @@ make shutdown-win11
 
 ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `win10`, `win11`, `win7u`.
 
+Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
+Per ricavare l'ID numerico runtime di una VM avviata:
+
+```bash
+make status
+```
+
+`make status` mostra prima l'elenco libvirt e poi una tabella delle VM gestite
+dal Makefile con ID stabile, nome libvirt, ID runtime e stato. Nell'elenco
+libvirt la prima colonna (`Id`) e' l'ID runtime, per esempio `2` in questa riga:
+
+```text
+ Id   Nome        Stato
+-----------------------------
+ 2    Windows11   in esecuzione
+```
+
+Quell'ID numerico esiste solo mentre la VM e' in esecuzione e cambia tra un avvio
+e l'altro. Subito sotto trovi la corrispondenza stabile usata dal Makefile:
+
+```text
+ID         VM             LibvirtId  Stato
+win11      Windows11      2          running
+```
+
+Il Makefile usa gli ID stabili:
+
+```bash
+make status-win11
+make start-win11
+make shutdown-win11
+```
+
+Se vuoi interrogare l'ID numerico libvirt, usa direttamente `virsh`:
+
+```bash
+virsh dominfo 2
+```
+
 Ogni script fa tutto in autonomia:
 
 1. Scarica la ISO originale se mancante

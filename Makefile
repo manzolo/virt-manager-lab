@@ -31,14 +31,20 @@ help:
 		'  make install-<id>       Avvia lo script in modalita interattiva' \
 		'  make reinstall-<id>     Risponde S allo script se la VM esiste gia' \
 		'  make iso-<id>           Rigenera solo la ISO unattended (solo Windows)' \
+		'                          <id> e uno degli ID Makefile mostrati da make list' \
 		'' \
 		'Target gestione VM:' \
-		'  make status             Mostra tutte le VM libvirt' \
-		'  make status-<id>        Mostra stato della VM' \
-		'  make start-<id>         Avvia la VM' \
-		'  make shutdown-<id>      Spegne ordinatamente la VM' \
-		'  make destroy-<id>       Spegne forzatamente la VM' \
+		'  make status             Mostra tutte le VM libvirt e la mappa ID Makefile' \
+		'                          La prima colonna e l ID numerico libvirt, valido solo mentre la VM gira' \
+		'  make status-<id>        Mostra stato della VM gestita, es. make status-win11' \
+		'  make start-<id>         Avvia la VM gestita, es. make start-win11' \
+		'  make shutdown-<id>      Spegne ordinatamente la VM gestita' \
+		'  make destroy-<id>       Spegne forzatamente la VM gestita' \
 		'  make undefine-<id>      Rimuove la definizione libvirt, non il disco' \
+		'' \
+		'Nota:' \
+		'  make status-2 non e un target: 2 e l ID runtime di libvirt, non l ID Makefile.' \
+		'  Per interrogare quel numero usa direttamente: virsh dominfo 2' \
 		'' \
 		'Target utili:' \
 		'  make report             Rigenera vm-report.html' \
@@ -55,6 +61,21 @@ list:
 
 status:
 	virsh list --all
+	@printf '\n%s\n' 'VM gestite dal Makefile:'
+	@printf '%-10s %-14s %-10s %s\n' 'ID' 'VM' 'LibvirtId' 'Stato'
+	@for row in \
+		'debian13:$(VM_debian13)' \
+		'ubuntu24:$(VM_ubuntu24)' \
+		'ubuntu26:$(VM_ubuntu26)' \
+		'win10:$(VM_win10)' \
+		'win11:$(VM_win11)' \
+		'win7u:$(VM_win7u)'; do \
+		make_id="$${row%%:*}"; \
+		vm="$${row#*:}"; \
+		libvirt_id="$$(virsh domid "$$vm" 2>/dev/null || printf '-')"; \
+		state="$$(virsh domstate "$$vm" 2>/dev/null || printf 'non definita')"; \
+		printf '%-10s %-14s %-10s %s\n' "$$make_id" "$$vm" "$$libvirt_id" "$$state"; \
+	done
 
 report:
 	bash scripts/vm-report.sh vm-report.html

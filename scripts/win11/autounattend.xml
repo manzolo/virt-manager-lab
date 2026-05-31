@@ -39,7 +39,7 @@
       <!-- Accetta la licenza automaticamente -->
       <UserData>
         <AcceptEula>true</AcceptEula>
-        <FullName>Manzolo</FullName>
+        <FullName>__VM_REALNAME__</FullName>
         <Organization>Lab</Organization>
         <!-- Chiave KMS generica pubblica per Win11 Pro (non attiva, solo per saltare la schermata) -->
         <ProductKey>
@@ -216,12 +216,11 @@
       <UserAccounts>
         <LocalAccounts>
           <LocalAccount wcm:action="add">
-            <Name>manzolo</Name>
-            <DisplayName>Manzolo</DisplayName>
+            <Name>__VM_USER__</Name>
+            <DisplayName>__VM_REALNAME__</DisplayName>
             <Group>Administrators</Group>
             <Password>
-              <!-- Cambia questa password prima di usare in produzione -->
-              <Value>manzolo</Value>
+              <Value>__VM_PASS__</Value>
               <PlainText>true</PlainText>
             </Password>
           </LocalAccount>
@@ -231,9 +230,9 @@
       <!-- Login automatico al primo avvio -->
       <AutoLogon>
         <Enabled>true</Enabled>
-        <Username>manzolo</Username>
+        <Username>__VM_USER__</Username>
         <Password>
-          <Value>manzolo</Value>
+          <Value>__VM_PASS__</Value>
           <PlainText>true</PlainText>
         </Password>
         <LogonCount>1</LogonCount>

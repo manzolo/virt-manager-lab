@@ -10,14 +10,19 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
+REPO_DIR="$VM_BASE_DIR/virt-manager"
+
 VM_NAME="ubuntu24.04"
-DISK_PATH="/home/manzolo/Workspaces/qemu/storage/hd/ubuntu24.04.qcow2"
+DISK_PATH="$STORAGE/hd/ubuntu24.04.qcow2"
 DISK_SIZE="40G"
-ISO_ORIG="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/ubuntu-24.04.3-desktop-amd64.iso"
-ISO_AUTO="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/ubuntu-24.04.3-autoinstall.iso"
-AUTOINSTALL_SRC="/home/manzolo/Workspaces/qemu/virt-manager/ubuntu24.04-autoinstall.yaml"
+ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-24.04.3-desktop-amd64.iso"
+ISO_AUTO="$STORAGE/Iso/Distro/ubuntu-24.04.3-autoinstall.iso"
+AUTOINSTALL_TEMPLATE="$REPO_DIR/ubuntu24.04-autoinstall.yaml"
 ISO_URL="https://releases.ubuntu.com/24.04.3/ubuntu-24.04.3-desktop-amd64.iso"
-SHARED_DIR="/home/manzolo/Workspaces/qemu/storage/shared"
+SHARED_DIR="$STORAGE/shared"
 
 # --------------------------------------------------------------------------
 # 1. Scarica ISO originale se mancante
@@ -67,7 +72,10 @@ rm -f "$ISO_AUTO"
 # File temporanei
 GRUBCFG_TMP=$(mktemp /tmp/ubuntu-grub.cfg.XXXXX)
 META_TMP=$(mktemp /tmp/ubuntu-meta.XXXXX)
+AUTOINSTALL_RENDERED=$(mktemp /tmp/ubuntu24-autoinstall.XXXXX.yaml)
 touch "$META_TMP"
+trap 'rm -f "$GRUBCFG_TMP" "$META_TMP" "$AUTOINSTALL_RENDERED"' EXIT
+render_template "$AUTOINSTALL_TEMPLATE" "$AUTOINSTALL_RENDERED"
 
 cat > "$GRUBCFG_TMP" <<'GRUBCFG'
 set default=0
@@ -100,12 +108,11 @@ xorriso \
     -indev  "$ISO_ORIG" \
     -outdev "$ISO_AUTO" \
     -boot_image any replay \
-    -map "$GRUBCFG_TMP"    /boot/grub/grub.cfg \
-    -map "$AUTOINSTALL_SRC" /user-data \
-    -map "$META_TMP"        /meta-data \
+    -map "$GRUBCFG_TMP"          /boot/grub/grub.cfg \
+    -map "$AUTOINSTALL_RENDERED" /user-data \
+    -map "$META_TMP"             /meta-data \
     -commit -eject all 2>&1 | grep -v "^xorriso : UPDATE" || true
 
-rm -f "$GRUBCFG_TMP" "$META_TMP"
 echo "ISO pronta: $ISO_AUTO"
 
 # --------------------------------------------------------------------------

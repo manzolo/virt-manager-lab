@@ -7,21 +7,26 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
+REPO_DIR="$VM_BASE_DIR/virt-manager"
+
 VM_NAME="lubuntu20.04"
-DISK_PATH="/home/manzolo/Workspaces/qemu/storage/hd/lubuntu20.04.qcow2"
+DISK_PATH="$STORAGE/hd/lubuntu20.04.qcow2"
 DISK_SIZE="25G"
-ISO_ORIG="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/ubuntu-20.04.6-live-server-amd64.iso"
-ISO_AUTO="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/lubuntu-20.04.6-autoinstall.iso"
-AUTOINSTALL_SRC="/home/manzolo/Workspaces/qemu/virt-manager/lubuntu20.04-autoinstall.yaml"
+ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-20.04.6-live-server-amd64.iso"
+ISO_AUTO="$STORAGE/Iso/Distro/lubuntu-20.04.6-autoinstall.iso"
+AUTOINSTALL_TEMPLATE="$REPO_DIR/lubuntu20.04-autoinstall.yaml"
 ISO_URL="https://releases.ubuntu.com/20.04.6/ubuntu-20.04.6-live-server-amd64.iso"
-SHARED_DIR="/home/manzolo/Workspaces/qemu/storage/shared"
+SHARED_DIR="$STORAGE/shared"
 
 for cmd in wget xorriso qemu-img virt-install virsh; do
     command -v "$cmd" >/dev/null || { echo "Comando mancante: $cmd"; exit 1; }
 done
 
-if [[ ! -f "$AUTOINSTALL_SRC" ]]; then
-    echo "Mancante: $AUTOINSTALL_SRC"
+if [[ ! -f "$AUTOINSTALL_TEMPLATE" ]]; then
+    echo "Mancante: $AUTOINSTALL_TEMPLATE"
     exit 1
 fi
 
@@ -58,7 +63,10 @@ rm -f "$ISO_AUTO"
 
 GRUBCFG_TMP=$(mktemp /tmp/lubuntu20-grub.cfg.XXXXX)
 META_TMP=$(mktemp /tmp/lubuntu20-meta.XXXXX)
+AUTOINSTALL_RENDERED=$(mktemp /tmp/lubuntu20-autoinstall.XXXXX.yaml)
 touch "$META_TMP"
+trap 'rm -f "$GRUBCFG_TMP" "$META_TMP" "$AUTOINSTALL_RENDERED"' EXIT
+render_template "$AUTOINSTALL_TEMPLATE" "$AUTOINSTALL_RENDERED"
 
 cat > "$GRUBCFG_TMP" <<'GRUBCFG'
 set default=0
@@ -88,12 +96,11 @@ xorriso \
     -indev  "$ISO_ORIG" \
     -outdev "$ISO_AUTO" \
     -boot_image any replay \
-    -map "$GRUBCFG_TMP"     /boot/grub/grub.cfg \
-    -map "$AUTOINSTALL_SRC" /user-data \
-    -map "$META_TMP"        /meta-data \
+    -map "$GRUBCFG_TMP"          /boot/grub/grub.cfg \
+    -map "$AUTOINSTALL_RENDERED" /user-data \
+    -map "$META_TMP"             /meta-data \
     -commit -eject all 2>&1 | grep -v "^xorriso : UPDATE" || true
 
-rm -f "$GRUBCFG_TMP" "$META_TMP"
 echo "ISO pronta: $ISO_AUTO"
 
 echo "Creo e avvio la VM '$VM_NAME'..."

@@ -16,10 +16,10 @@ autoinstall:
   # --- Identità ---------------------------------------------------------------
   identity:
     hostname: ubuntu26
-    realname: Manzolo
-    username: manzolo
-    # Hash generato con: openssl passwd -6 "manzolo"
-    password: '$6$xAz1OOYvRK3.5IdZ$sgTB7qeJUZ7QG62n2AGN146CRBfwwAeWMYHdLZk/sZYSvWub.APwbCwMfSnbteh7/78mWFWzHFoxEZgwV/T/H/'
+    realname: __VM_REALNAME__
+    username: __VM_USER__
+    # Hash generato con: openssl passwd -6 "${VM_PASS}"
+    password: '__VM_PASS_HASH__'
 
   # --- Rete (DHCP automatico) -------------------------------------------------
   network:
@@ -59,6 +59,9 @@ autoinstall:
   late-commands:
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent
+    - curtin in-target -- mkdir -p /etc/gdm3
+    - curtin in-target -- bash -c 'printf "[daemon]\nAutomaticLoginEnable=True\nAutomaticLogin=__VM_USER__\n" > /etc/gdm3/custom.conf'
+    - curtin in-target -- bash -c 'systemctl enable gdm3 || true'
     - curtin in-target -- mkdir -p /mnt/shared
     - curtin in-target -- bash -c 'printf "host_shared\t/mnt/shared\tvirtiofs\tnofail,x-systemd.automount,x-systemd.idle-timeout=60\t0\t0\n" >> /etc/fstab'
     # Ubuntu Desktop crea l'utente dopo queste late-commands: usa /etc/skel.
@@ -70,7 +73,7 @@ autoinstall:
     - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Scrivania/shared
     - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Desktop/shared
     - curtin in-target -- bash -c 'printf "file:///mnt/shared shared\n" >> /etc/skel/.config/gtk-3.0/bookmarks'
-    - curtin in-target -- bash -c 'if [ -d /home/manzolo ]; then mkdir -p /home/manzolo/.config/gtk-3.0 /home/manzolo/Scrivania /home/manzolo/Desktop; chown -R manzolo:manzolo /home/manzolo/.config /home/manzolo/Scrivania /home/manzolo/Desktop; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Scrivania/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Desktop/shared; grep -qxF "file:///mnt/shared shared" /home/manzolo/.config/gtk-3.0/bookmarks 2>/dev/null || printf "file:///mnt/shared shared\n" >> /home/manzolo/.config/gtk-3.0/bookmarks; chown -R manzolo:manzolo /home/manzolo/.config; fi'
+    - curtin in-target -- bash -c 'if [ -d /home/__VM_USER__ ]; then mkdir -p /home/__VM_USER__/.config/gtk-3.0 /home/__VM_USER__/Scrivania /home/__VM_USER__/Desktop; chown -R __VM_USER__:__VM_USER__ /home/__VM_USER__/.config /home/__VM_USER__/Scrivania /home/__VM_USER__/Desktop; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/shared; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/Scrivania/shared; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/Desktop/shared; grep -qxF "file:///mnt/shared shared" /home/__VM_USER__/.config/gtk-3.0/bookmarks 2>/dev/null || printf "file:///mnt/shared shared\n" >> /home/__VM_USER__/.config/gtk-3.0/bookmarks; chown -R __VM_USER__:__VM_USER__ /home/__VM_USER__/.config; fi'
 
   # Spegni invece di riavviare (virt-install usa --noreboot)
   shutdown: poweroff

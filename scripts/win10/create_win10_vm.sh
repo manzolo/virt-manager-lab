@@ -14,8 +14,9 @@
 set -euo pipefail
 
 VM_NAME="Windows10"
-STORAGE="/home/manzolo/Workspaces/qemu/storage"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../scripts/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
 
 ISO_ORIG="$STORAGE/Iso/Windows/Windows10.iso"
 ISO_AUTO="$STORAGE/Iso/Windows/Windows10-autounattend-noprompt.iso"
@@ -54,7 +55,10 @@ echo "[*] Preparo ISO Windows 10 unattended senza prompt di boot..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 7z x -y "-o$BUILD_DIR" "$ISO_ORIG" >/dev/null
-cp "$AUTOUNATTEND" "$BUILD_DIR/autounattend.xml"
+AUTOUNATTEND_RENDERED=$(mktemp /tmp/win10-autounattend.XXXXX.xml)
+trap 'rm -f "$AUTOUNATTEND_RENDERED"' EXIT
+render_template "$AUTOUNATTEND" "$AUTOUNATTEND_RENDERED"
+cp "$AUTOUNATTEND_RENDERED" "$BUILD_DIR/autounattend.xml"
 mkdir -p "$BUILD_DIR/tools"
 cp "$SHARED_DIR/winfsp-2.0.23075.msi" "$BUILD_DIR/tools/winfsp-2.0.23075.msi"
 cp "$SHARED_DIR/virtio-win-guest-tools.exe" "$BUILD_DIR/tools/virtio-win-guest-tools.exe"

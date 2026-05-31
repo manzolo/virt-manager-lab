@@ -16,8 +16,9 @@
 set -euo pipefail
 
 VM_NAME="Windows11"
-STORAGE="/home/manzolo/Workspaces/qemu/storage"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../scripts/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
 
 ISO_ORIG="$STORAGE/Iso/Windows/Win11_24H2_Italian_x64.iso"
 ISO_AUTO="$STORAGE/Iso/Windows/Win11_24H2_Italian_x64-autounattend-noprompt.iso"
@@ -48,7 +49,10 @@ echo "[*] Preparo ISO Windows 11 unattended senza prompt di boot..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 7z x -y "-o$BUILD_DIR" "$ISO_ORIG" >/dev/null
-cp "$AUTOUNATTEND" "$BUILD_DIR/autounattend.xml"
+AUTOUNATTEND_RENDERED=$(mktemp /tmp/win11-autounattend.XXXXX.xml)
+trap 'rm -f "$AUTOUNATTEND_RENDERED"' EXIT
+render_template "$AUTOUNATTEND" "$AUTOUNATTEND_RENDERED"
+cp "$AUTOUNATTEND_RENDERED" "$BUILD_DIR/autounattend.xml"
 mkdir -p "$BUILD_DIR/tools"
 cp "$SHARED_DIR/winfsp-2.0.23075.msi" "$BUILD_DIR/tools/winfsp-2.0.23075.msi"
 

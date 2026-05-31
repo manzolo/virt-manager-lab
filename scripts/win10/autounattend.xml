@@ -27,7 +27,7 @@
 
       <UserData>
         <AcceptEula>true</AcceptEula>
-        <FullName>Manzolo</FullName>
+        <FullName>__VM_REALNAME__</FullName>
         <Organization>Lab</Organization>
         <!-- Chiave KMS generica pubblica per Windows 10 Pro: installa, non attiva. -->
         <ProductKey>
@@ -168,11 +168,11 @@
       <UserAccounts>
         <LocalAccounts>
           <LocalAccount wcm:action="add">
-            <Name>manzolo</Name>
-            <DisplayName>Manzolo</DisplayName>
+            <Name>__VM_USER__</Name>
+            <DisplayName>__VM_REALNAME__</DisplayName>
             <Group>Administrators</Group>
             <Password>
-              <Value>manzolo</Value>
+              <Value>__VM_PASS__</Value>
               <PlainText>true</PlainText>
             </Password>
           </LocalAccount>
@@ -181,9 +181,9 @@
 
       <AutoLogon>
         <Enabled>true</Enabled>
-        <Username>manzolo</Username>
+        <Username>__VM_USER__</Username>
         <Password>
-          <Value>manzolo</Value>
+          <Value>__VM_PASS__</Value>
           <PlainText>true</PlainText>
         </Password>
         <LogonCount>1</LogonCount>

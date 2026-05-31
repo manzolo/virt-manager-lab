@@ -5,12 +5,17 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
+REPO_DIR="$VM_BASE_DIR/virt-manager"
+
 VM_NAME="Debian13"
-DISK_PATH="/home/manzolo/Workspaces/qemu/storage/hd/Debian13.qcow2"
+DISK_PATH="$STORAGE/hd/Debian13.qcow2"
 DISK_SIZE="50G"
-ISO_ORIG="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/debian-13.0.0-amd64-DVD-1.iso"
-ISO_PRESEED="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/debian-13-preseed.iso"
-PRESEED_SRC="/home/manzolo/Workspaces/qemu/virt-manager/Debian13-preseed.cfg"
+ISO_ORIG="$STORAGE/Iso/Distro/debian-13.0.0-amd64-DVD-1.iso"
+ISO_PRESEED="$STORAGE/Iso/Distro/debian-13-preseed.iso"
+PRESEED_TEMPLATE="$REPO_DIR/Debian13-preseed.cfg"
 ISO_WORKDIR="/tmp/debian13-iso-build"
 ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-13.0.0-amd64-DVD-1.iso"
 
@@ -63,7 +68,10 @@ xorriso -osirrox on \
     -extract / "$ISO_WORKDIR/" 2>/dev/null
 
 echo "Inietto il preseed..."
-cp "$PRESEED_SRC" "$ISO_WORKDIR/preseed.cfg"
+PRESEED_RENDERED=$(mktemp /tmp/debian13-preseed.XXXXX.cfg)
+trap 'rm -f "$PRESEED_RENDERED"' EXIT
+render_template "$PRESEED_TEMPLATE" "$PRESEED_RENDERED"
+cp "$PRESEED_RENDERED" "$ISO_WORKDIR/preseed.cfg"
 chmod -R u+w "$ISO_WORKDIR/boot/grub/" "$ISO_WORKDIR/isolinux/"
 
 # GRUB (EFI): prima voce = auto preseed, timeout 10s

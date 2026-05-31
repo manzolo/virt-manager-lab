@@ -18,8 +18,9 @@
 set -euo pipefail
 
 VM_NAME="Windows7U"
-STORAGE="/home/manzolo/Workspaces/qemu/storage"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/../../scripts/lab.env"
+STORAGE="$VM_BASE_DIR/storage"
 
 ISO_ORIG="$STORAGE/Iso/Windows/Windows7U.iso"
 ISO_AUTO="$STORAGE/Iso/Windows/Windows7U-autounattend-noprompt.iso"
@@ -68,7 +69,10 @@ echo "[*] Preparo ISO Windows 7 Ultimate unattended senza prompt di boot..."
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 7z x -y "-o$BUILD_DIR" "$ISO_ORIG" >/dev/null
-cp "$AUTOUNATTEND" "$BUILD_DIR/autounattend.xml"
+AUTOUNATTEND_RENDERED=$(mktemp /tmp/win7u-autounattend.XXXXX.xml)
+trap 'rm -f "$AUTOUNATTEND_RENDERED"' EXIT
+render_template "$AUTOUNATTEND" "$AUTOUNATTEND_RENDERED"
+cp "$AUTOUNATTEND_RENDERED" "$BUILD_DIR/autounattend.xml"
 
 mkdir -p "$BUILD_DIR/tools"
 cp "$FIREFOX_INSTALLER" "$BUILD_DIR/tools/firefox-setup.exe"

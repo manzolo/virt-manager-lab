@@ -14,10 +14,10 @@ autoinstall:
 
   identity:
     hostname: lubuntu22
-    realname: Manzolo
-    username: manzolo
-    # Hash generato con: openssl passwd -6 "manzolo"
-    password: '$6$xAz1OOYvRK3.5IdZ$sgTB7qeJUZ7QG62n2AGN146CRBfwwAeWMYHdLZk/sZYSvWub.APwbCwMfSnbteh7/78mWFWzHFoxEZgwV/T/H/'
+    realname: __VM_REALNAME__
+    username: __VM_USER__
+    # Hash generato con: openssl passwd -6 "${VM_PASS}"
+    password: '__VM_PASS_HASH__'
 
   network:
     network:
@@ -54,6 +54,8 @@ autoinstall:
 
   late-commands:
     - curtin in-target -- systemctl set-default graphical.target
+    - curtin in-target -- mkdir -p /etc/sddm.conf.d
+    - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=Lubuntu\n" > /etc/sddm.conf.d/autologin.conf'
     - curtin in-target -- systemctl enable sddm
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent
@@ -63,6 +65,6 @@ autoinstall:
     - curtin in-target -- ln -sfn /mnt/shared /etc/skel/shared
     - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Scrivania/shared
     - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Desktop/shared
-    - curtin in-target -- bash -c 'if [ -d /home/manzolo ]; then mkdir -p /home/manzolo/Scrivania /home/manzolo/Desktop; chown -R manzolo:manzolo /home/manzolo/Scrivania /home/manzolo/Desktop; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Scrivania/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Desktop/shared; fi'
+    - curtin in-target -- bash -c 'if [ -d /home/__VM_USER__ ]; then mkdir -p /home/__VM_USER__/Scrivania /home/__VM_USER__/Desktop; chown -R __VM_USER__:__VM_USER__ /home/__VM_USER__/Scrivania /home/__VM_USER__/Desktop; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/shared; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/Scrivania/shared; runuser -u __VM_USER__ -- ln -sfn /mnt/shared /home/__VM_USER__/Desktop/shared; fi'
 
   shutdown: poweroff

@@ -72,8 +72,10 @@ status:
 		'win7u:$(VM_win7u)'; do \
 		make_id="$${row%%:*}"; \
 		vm="$${row#*:}"; \
-		libvirt_id="$$(virsh domid "$$vm" 2>/dev/null || printf '-')"; \
-		state="$$(virsh domstate "$$vm" 2>/dev/null || printf 'non definita')"; \
+		libvirt_id="$$(virsh domid "$$vm" 2>/dev/null | head -n 1 || true)"; \
+		state="$$(virsh domstate "$$vm" 2>/dev/null | head -n 1 || true)"; \
+		[[ -n "$$libvirt_id" ]] || libvirt_id='-'; \
+		[[ -n "$$state" ]] || state='non definita'; \
 		printf '%-10s %-14s %-10s %s\n' "$$make_id" "$$vm" "$$libvirt_id" "$$state"; \
 	done
 

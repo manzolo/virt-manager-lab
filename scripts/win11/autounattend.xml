@@ -227,7 +227,7 @@
         </LocalAccounts>
       </UserAccounts>
 
-      <!-- Login automatico al primo avvio -->
+      <!-- Login automatico per il lab -->
       <AutoLogon>
         <Enabled>true</Enabled>
         <Username>__VM_USER__</Username>
@@ -235,7 +235,7 @@
           <Value>__VM_PASS__</Value>
           <PlainText>true</PlainText>
         </Password>
-        <LogonCount>1</LogonCount>
+        <LogonCount>999</LogonCount>
       </AutoLogon>
 
       <!-- Script post-installazione: installa strumenti dai supporti montati -->

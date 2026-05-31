@@ -48,6 +48,7 @@ autoinstall:
     - openvpn
     - network-manager-openvpn
     - network-manager-openvpn-gnome
+    - plymouth-theme-spinner
     - spice-vdagent
     - qemu-guest-agent
     - bind9-dnsutils
@@ -62,6 +63,8 @@ autoinstall:
     - curtin in-target -- mkdir -p /etc/gdm3
     - curtin in-target -- bash -c 'printf "[daemon]\nAutomaticLoginEnable=True\nAutomaticLogin=__VM_USER__\n" > /etc/gdm3/custom.conf'
     - curtin in-target -- bash -c 'systemctl enable gdm3 || true'
+    - curtin in-target -- bash -c 'if [ -f /usr/share/plymouth/themes/spinner/spinner.plymouth ]; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/spinner/spinner.plymouth; update-initramfs -u; fi'
+    - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- mkdir -p /mnt/shared
     - curtin in-target -- bash -c 'printf "host_shared\t/mnt/shared\tvirtiofs\tnofail,x-systemd.automount,x-systemd.idle-timeout=60\t0\t0\n" >> /etc/fstab'
     # Ubuntu Desktop crea l'utente dopo queste late-commands: usa /etc/skel.

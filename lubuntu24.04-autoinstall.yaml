@@ -39,6 +39,7 @@ autoinstall:
 
   packages:
     - lubuntu-desktop
+    - plymouth-theme-lubuntu-logo
     - qemu-guest-agent
     - spice-vdagent
     - openvpn
@@ -54,6 +55,8 @@ autoinstall:
     - curtin in-target -- mkdir -p /etc/sddm.conf.d
     - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=Lubuntu\n" > /etc/sddm.conf.d/autologin.conf'
     - curtin in-target -- bash -c 'systemctl enable sddm || true'
+    - curtin in-target -- bash -c 'if [ -f /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth ]; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth; update-initramfs -u; fi'
+    - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent
     - curtin in-target -- mkdir -p /mnt/shared

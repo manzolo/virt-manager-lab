@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 Windows10 Windows11 Windows7U
+VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 Windows10 Windows11 Windows7U
 
 SCRIPT_debian13 := scripts/install-debian13.sh
 SCRIPT_ubuntu24 := scripts/install-ubuntu24.04.sh
@@ -11,6 +11,10 @@ SCRIPT_ubuntu26 := scripts/install-ubuntu26.04.sh
 SCRIPT_lubuntu20 := scripts/install-lubuntu20.04.sh
 SCRIPT_lubuntu22 := scripts/install-lubuntu22.04.sh
 SCRIPT_lubuntu24 := scripts/install-lubuntu24.04.sh
+SCRIPT_kubuntu22 := scripts/install-kubuntu22.04.sh
+SCRIPT_xubuntu22 := scripts/install-xubuntu22.04.sh
+SCRIPT_mate22 := scripts/install-mate22.04.sh
+SCRIPT_budgie22 := scripts/install-budgie22.04.sh
 SCRIPT_win10 := scripts/win10/create_win10_vm.sh
 SCRIPT_win11 := scripts/win11/create_win11_vm.sh
 SCRIPT_win7u := scripts/win7u/create_win7u_vm.sh
@@ -21,6 +25,10 @@ VM_ubuntu26 := ubuntu26.04
 VM_lubuntu20 := lubuntu20.04
 VM_lubuntu22 := lubuntu22.04
 VM_lubuntu24 := lubuntu24.04
+VM_kubuntu22 := kubuntu22.04
+VM_xubuntu22 := xubuntu22.04
+VM_mate22 := ubuntu-mate22.04
+VM_budgie22 := ubuntu-budgie22.04
 VM_win10 := Windows10
 VM_win11 := Windows11
 VM_win7u := Windows7U
@@ -33,7 +41,7 @@ help:
 		'Gestione installazioni unattended' \
 		'' \
 		'Target installazione:' \
-		'  make debian13 | ubuntu24 | ubuntu26 | lubuntu20 | lubuntu22 | lubuntu24 | win10 | win11 | win7u' \
+		'  make debian13 | ubuntu24 | ubuntu26 | lubuntu20 | lubuntu22 | lubuntu24 | kubuntu22 | xubuntu22 | mate22 | budgie22 | win10 | win11 | win7u' \
 		'  make install-<id>       Avvia lo script in modalita interattiva' \
 		'  make reinstall-<id>     Risponde S allo script se la VM esiste gia' \
 		'  make iso-<id>           Rigenera solo la ISO unattended (solo Windows)' \
@@ -64,6 +72,10 @@ list:
 	@printf '%-10s %s\n' 'lubuntu20' '$(VM_lubuntu20)'
 	@printf '%-10s %s\n' 'lubuntu22' '$(VM_lubuntu22)'
 	@printf '%-10s %s\n' 'lubuntu24' '$(VM_lubuntu24)'
+	@printf '%-10s %s\n' 'kubuntu22' '$(VM_kubuntu22)'
+	@printf '%-10s %s\n' 'xubuntu22' '$(VM_xubuntu22)'
+	@printf '%-10s %s\n' 'mate22' '$(VM_mate22)'
+	@printf '%-10s %s\n' 'budgie22' '$(VM_budgie22)'
 	@printf '%-10s %s\n' 'win10' '$(VM_win10)'
 	@printf '%-10s %s\n' 'win11' '$(VM_win11)'
 	@printf '%-10s %s\n' 'win7u' '$(VM_win7u)'
@@ -79,6 +91,10 @@ status:
 		'lubuntu20:$(VM_lubuntu20)' \
 		'lubuntu22:$(VM_lubuntu22)' \
 		'lubuntu24:$(VM_lubuntu24)' \
+		'kubuntu22:$(VM_kubuntu22)' \
+		'xubuntu22:$(VM_xubuntu22)' \
+		'mate22:$(VM_mate22)' \
+		'budgie22:$(VM_budgie22)' \
 		'win10:$(VM_win10)' \
 		'win11:$(VM_win11)' \
 		'win7u:$(VM_win7u)'; do \
@@ -135,6 +151,10 @@ $(eval $(call INSTALL_TARGETS,ubuntu26))
 $(eval $(call INSTALL_TARGETS,lubuntu20))
 $(eval $(call INSTALL_TARGETS,lubuntu22))
 $(eval $(call INSTALL_TARGETS,lubuntu24))
+$(eval $(call INSTALL_TARGETS,kubuntu22))
+$(eval $(call INSTALL_TARGETS,xubuntu22))
+$(eval $(call INSTALL_TARGETS,mate22))
+$(eval $(call INSTALL_TARGETS,budgie22))
 $(eval $(call INSTALL_TARGETS,win10))
 $(eval $(call INSTALL_TARGETS,win11))
 $(eval $(call INSTALL_TARGETS,win7u))

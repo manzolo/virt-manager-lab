@@ -183,7 +183,7 @@
           <Value>__VM_PASS__</Value>
           <PlainText>true</PlainText>
         </Password>
-        <LogonCount>1</LogonCount>
+        <LogonCount>999</LogonCount>
       </AutoLogon>
 
     </component>

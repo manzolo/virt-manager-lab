@@ -42,11 +42,13 @@ autoinstall:
   late-commands:
     - curtin in-target -- bash -c "sed -i 's|main restricted$|main restricted universe multiverse|g' /etc/apt/sources.list"
     - curtin in-target -- apt-get update
-    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it linux-generic-hwe-20.04
+    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop plymouth-theme-lubuntu-logo qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it linux-generic-hwe-20.04
     - curtin in-target -- systemctl set-default graphical.target
     - curtin in-target -- mkdir -p /etc/sddm.conf.d
     - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=Lubuntu\n" > /etc/sddm.conf.d/autologin.conf'
     - curtin in-target -- bash -c 'systemctl enable sddm || true'
+    - curtin in-target -- bash -c 'if [ -f /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth ]; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth; update-initramfs -u; fi'
+    - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent
     - curtin in-target -- mkdir -p /mnt/shared

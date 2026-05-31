@@ -1,8 +1,8 @@
 #cloud-config
 # =============================================================================
-# Lubuntu 22.04 LTS (Jammy) — Autoinstall unattended
-# Base installer: Ubuntu 22.04 live-server + pacchetto lubuntu-desktop
-# Target VM: lubuntu22.04 / lubuntu22
+# Ubuntu flavor 22.04 LTS (Jammy) — Autoinstall unattended
+# Base installer: Ubuntu 22.04 live-server + pacchetto desktop del flavor
+# Template usato da scripts/install-ubuntu-flavor22.04.sh
 # =============================================================================
 autoinstall:
   version: 1
@@ -13,7 +13,7 @@ autoinstall:
     variant: ''
 
   identity:
-    hostname: lubuntu22
+    hostname: __FLAVOR_HOSTNAME__
     realname: __VM_REALNAME__
     username: __VM_USER__
     # Hash generato con: openssl passwd -6 "${VM_PASS}"
@@ -37,28 +37,18 @@ autoinstall:
   ssh:
     install-server: false
 
-  packages:
-    - lubuntu-desktop
-    - plymouth-theme-lubuntu-logo
-    - qemu-guest-agent
-    - spice-vdagent
-    - openvpn
-    - network-manager-openvpn
-    - network-manager-openvpn-gnome
-    - bind9-dnsutils
-    - aspell
-    - aspell-it
-    - bpfcc-tools
-    - bpftrace
-    - python3-bpfcc
-    - linux-generic-hwe-22.04
+  packages: []
 
   late-commands:
+    - curtin in-target -- bash -c "sed -i 's|main restricted$|main restricted universe multiverse|g' /etc/apt/sources.list"
+    - curtin in-target -- apt-get update
+    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y __DESKTOP_PACKAGE__ __PLYMOUTH_PACKAGE__ qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it linux-generic-hwe-22.04
     - curtin in-target -- systemctl set-default graphical.target
-    - curtin in-target -- mkdir -p /etc/sddm.conf.d
-    - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=Lubuntu\n" > /etc/sddm.conf.d/autologin.conf'
-    - curtin in-target -- systemctl enable sddm
-    - curtin in-target -- bash -c 'if [ -f /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth ]; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth; update-initramfs -u; fi'
+    - curtin in-target -- mkdir -p /etc/sddm.conf.d /etc/lightdm/lightdm.conf.d
+    - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=__SDDM_SESSION__\n" > /etc/sddm.conf.d/autologin.conf'
+    - curtin in-target -- bash -c 'printf "[Seat:*]\nautologin-user=__VM_USER__\nautologin-user-timeout=0\n" > /etc/lightdm/lightdm.conf.d/50-autologin.conf'
+    - curtin in-target -- bash -c 'systemctl enable __DISPLAY_MANAGER__ || true'
+    - curtin in-target -- bash -c 'if [ -n "__PLYMOUTH_THEME_PATH__" ] && [ -f "__PLYMOUTH_THEME_PATH__" ]; then update-alternatives --set default.plymouth "__PLYMOUTH_THEME_PATH__"; update-initramfs -u; fi'
     - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent

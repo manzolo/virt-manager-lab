@@ -66,6 +66,23 @@ virsh pool-autostart hdd
 
 ## Installazione VM
 
+### Uso con Makefile
+
+Il Makefile alla root raccoglie i comandi principali:
+
+```bash
+make help
+make list
+make status
+make win11              # installazione interattiva
+make reinstall-win11    # risponde S se la VM esiste gia'
+make iso-win11          # rigenera solo la ISO unattended (Windows)
+make start-win11
+make shutdown-win11
+```
+
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `win10`, `win11`, `win7u`.
+
 Ogni script fa tutto in autonomia:
 
 1. Scarica la ISO originale se mancante

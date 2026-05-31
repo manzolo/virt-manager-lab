@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Installazione unattended Lubuntu 24.04 LTS (Noble) — lubuntu24
-# Base: Ubuntu live-server 24.04.4 + autoinstall + lubuntu-desktop.
+# Installazione unattended Lubuntu 20.04 LTS (Focal) — lubuntu20
+# Base: Ubuntu live-server 20.04.6 + autoinstall + lubuntu-desktop.
 #
-# Uso: bash scripts/install-lubuntu24.04.sh
-#      echo S | bash scripts/install-lubuntu24.04.sh   (non interattivo)
+# Uso: bash scripts/install-lubuntu20.04.sh
+#      echo S | bash scripts/install-lubuntu20.04.sh   (non interattivo)
 
 set -euo pipefail
 
-VM_NAME="lubuntu24.04"
-DISK_PATH="/home/manzolo/Workspaces/qemu/storage/hd/lubuntu24.04.qcow2"
-DISK_SIZE="35G"
-ISO_ORIG="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/ubuntu-24.04.4-live-server-amd64.iso"
-ISO_AUTO="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/lubuntu-24.04.4-autoinstall.iso"
-AUTOINSTALL_SRC="/home/manzolo/Workspaces/qemu/virt-manager/lubuntu24.04-autoinstall.yaml"
-ISO_URL="https://releases.ubuntu.com/24.04.4/ubuntu-24.04.4-live-server-amd64.iso"
+VM_NAME="lubuntu20.04"
+DISK_PATH="/home/manzolo/Workspaces/qemu/storage/hd/lubuntu20.04.qcow2"
+DISK_SIZE="25G"
+ISO_ORIG="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/ubuntu-20.04.6-live-server-amd64.iso"
+ISO_AUTO="/home/manzolo/Workspaces/qemu/storage/Iso/Distro/lubuntu-20.04.6-autoinstall.iso"
+AUTOINSTALL_SRC="/home/manzolo/Workspaces/qemu/virt-manager/lubuntu20.04-autoinstall.yaml"
+ISO_URL="https://releases.ubuntu.com/20.04.6/ubuntu-20.04.6-live-server-amd64.iso"
 SHARED_DIR="/home/manzolo/Workspaces/qemu/storage/shared"
 
 for cmd in wget xorriso qemu-img virt-install virsh; do
@@ -53,11 +53,11 @@ rm -f "$DISK_PATH"
 qemu-img create -f qcow2 -o preallocation=off "$DISK_PATH" "$DISK_SIZE"
 virsh pool-refresh hdd
 
-echo "Preparo ISO autoinstall Lubuntu..."
+echo "Preparo ISO autoinstall Lubuntu 20.04..."
 rm -f "$ISO_AUTO"
 
-GRUBCFG_TMP=$(mktemp /tmp/lubuntu-grub.cfg.XXXXX)
-META_TMP=$(mktemp /tmp/lubuntu-meta.XXXXX)
+GRUBCFG_TMP=$(mktemp /tmp/lubuntu20-grub.cfg.XXXXX)
+META_TMP=$(mktemp /tmp/lubuntu20-meta.XXXXX)
 touch "$META_TMP"
 
 cat > "$GRUBCFG_TMP" <<'GRUBCFG'
@@ -69,7 +69,7 @@ loadfont unicode
 set menu_color_normal=white/black
 set menu_color_highlight=black/light-gray
 
-menuentry "Automated Lubuntu Install" {
+menuentry "Automated Lubuntu 20.04 Install" {
     set gfxpayload=keep
     linux   /casper/vmlinuz autoinstall ds=nocloud\;s=/cdrom/ fsck.mode=skip quiet splash ---
     initrd  /casper/initrd
@@ -99,11 +99,11 @@ echo "ISO pronta: $ISO_AUTO"
 echo "Creo e avvio la VM '$VM_NAME'..."
 virt-install \
     --name "$VM_NAME" \
-    --memory 4096 \
+    --memory 2048 \
     --vcpus 2 \
     --machine q35 \
     --cpu host-passthrough \
-    --os-variant ubuntu24.04 \
+    --os-variant ubuntu20.04 \
     --disk "$DISK_PATH",bus=virtio,driver.discard=unmap \
     --cdrom "$ISO_AUTO" \
     --network network=default,model=virtio \

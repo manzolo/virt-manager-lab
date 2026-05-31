@@ -10,6 +10,7 @@ Il repo raccoglie tutto quello che serve per ricreare da zero le VM del lab: scr
 
 ```
 virt-manager-lab/
+├── Makefile                       # comandi install/start/shutdown/status per tutte le VM
 ├── scripts/
 │   ├── install-debian13.sh        # Debian 13 unattended (preseed)
 │   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
@@ -17,12 +18,14 @@ virt-manager-lab/
 │   ├── win10/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
-│   ├── win10/
-│   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
-│   │   └── autounattend.xml       # risposta automatica setup Win10
-│   └── win11/
-│       ├── create_win11_vm.sh     # Windows 11 con autounattend
-│       └── autounattend.xml       # risposta automatica setup Win11
+│   ├── win11/
+│   │   ├── create_win11_vm.sh     # Windows 11 con autounattend
+│   │   └── autounattend.xml       # risposta automatica setup Win11
+│   └── win7u/
+│       ├── create_win7u_vm.sh     # Windows 7 Ultimate con autounattend
+│       ├── autounattend.xml       # risposta automatica setup Win7
+│       ├── enable_win7u_smb_shared.sh  # configura Samba sul host per shared Z:
+│       └── enable_win7u_shared.sh      # aggiunge canale SPICE WebDAV alla VM
 ├── Debian13-preseed.cfg           # configurazione preseed Debian
 ├── ubuntu24.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 24.04
 ├── ubuntu26.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 26.04
@@ -156,6 +159,38 @@ echo S | bash scripts/install-ubuntu26.04.sh
 > **Nota:** lo script Ubuntu 26.04 rileva automaticamente l'`os-variant` disponibile
 > (`ubuntu26.04` se presente nel db osinfo, altrimenti fallback a `ubuntu25.10`).
 
+### Esempio — Windows 7 Ultimate
+
+```bash
+make win7u
+# oppure
+bash scripts/win7u/create_win7u_vm.sh
+```
+
+**Prerequisiti aggiuntivi** rispetto alle altre VM Windows:
+
+| File richiesto in `storage/shared/` | Scopo |
+|---|---|
+| `Firefox Setup 115.*.exe` | Firefox ESR (ultima versione che gira su Win7) |
+| `autoit-v3-setup.zip` | AutoIt v3 |
+| `SciTE4AutoIt3.exe` | editor SciTE per AutoIt |
+| `virtio-win-guest-tools.exe` | driver VirtIO |
+| `npp.8.6.4.Installer.x64.exe` | Notepad++ |
+
+Servono anche `storage/Iso/addons/virtio-win-0.1.285.iso` e `storage/Iso/addons/spice.iso`.
+
+Lo script installa tutto in autonomia (certificato Red Hat, driver viostor, Firefox ESR, AutoIt, SciTE, Notepad++) tramite `SetupComplete.cmd`. SPICE guest tools e VirtIO guest tools si installano manualmente al primo avvio con il batch sul desktop.
+
+**Cartella shared su Windows 7** — virtiofs non è supportato; si usa Samba:
+
+```bash
+# Sul host: configura e avvia Samba
+bash scripts/win7u/enable_win7u_smb_shared.sh
+
+# Nel guest: monta Z: (shortcut già sul desktop)
+net use Z: \\192.168.122.1\qemu-shared /persistent:yes
+```
+
 ---
 
 ## Cosa installano le VM Linux
@@ -222,7 +257,8 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |
-| Windows7/XP/98/95/NT | Windows legacy | per test compatibilità |
+| Windows7U | Windows 7 Ultimate | autounattend, viostor, Firefox ESR 115, AutoIt, Notepad++; shared via SMB |
+| WindowsXP/98/95/NT | Windows legacy | per test compatibilità |
 | pfSense | pfSense | firewall/router |
 | pi-hole | Ubuntu | ad-blocking DNS |
 | … | … | vedi `vms/` |

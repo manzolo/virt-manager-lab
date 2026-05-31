@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installazione unattended Ubuntu 26.04 LTS — ubuntu26.04
-# Replica: GNOME, bpfcc-tools, bpftrace, openvpn, virtiofs host_shared
+# Replica: GNOME, openvpn, virtiofs host_shared
 #
 # Strategia ISO: indev/outdev xorriso con -boot_image any replay
 # (preserva El Torito + EFI + MBR dall'originale)

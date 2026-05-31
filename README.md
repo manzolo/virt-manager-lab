@@ -225,7 +225,6 @@ Ogni script installa un sistema GNOME completo con questi pacchetti aggiuntivi:
 
 | Pacchetto | Scopo |
 |---|---|
-| `bpfcc-tools`, `bpftrace`, `python3-bpfcc` | debugging/tracing kernel con eBPF |
 | `openvpn`, `network-manager-openvpn*` | VPN integrata in GNOME |
 | `qemu-guest-agent` | integrazione con l'host (snapshot, IP, ecc.) |
 | `spice-vdagent` | copia/incolla e ridimensionamento schermo con SPICE |

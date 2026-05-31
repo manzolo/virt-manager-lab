@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installazione unattended Ubuntu 24.04 LTS (Noble) — ubuntu24
-# Replica: GNOME 46, bpfcc-tools, bpftrace, openvpn, virtiofs host_shared
+# Replica: GNOME 46, openvpn, virtiofs host_shared
 #
 # Strategia ISO: -indev/-outdev + -boot_image any replay
 # (preserva intatti El Torito, EFI appended partition e tutti i boot record)

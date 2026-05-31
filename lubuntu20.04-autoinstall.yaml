@@ -42,7 +42,7 @@ autoinstall:
   late-commands:
     - curtin in-target -- bash -c "sed -i 's|main restricted$|main restricted universe multiverse|g' /etc/apt/sources.list"
     - curtin in-target -- apt-get update
-    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it bpfcc-tools bpftrace python3-bpfcc linux-generic-hwe-20.04
+    - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it linux-generic-hwe-20.04
     - curtin in-target -- systemctl set-default graphical.target
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent

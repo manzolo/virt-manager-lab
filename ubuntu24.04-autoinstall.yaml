@@ -45,9 +45,6 @@ autoinstall:
   # --- Pacchetti aggiuntivi ---------------------------------------------------
   # GNOME Desktop è incluso nell'ISO desktop, qui solo i pacchetti extra
   packages:
-    - bpfcc-tools
-    - bpftrace
-    - python3-bpfcc
     - openvpn
     - network-manager-openvpn
     - network-manager-openvpn-gnome

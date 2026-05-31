@@ -1,0 +1,68 @@
+#cloud-config
+# =============================================================================
+# Lubuntu 24.04 LTS (Noble) — Autoinstall unattended
+# Base installer: Ubuntu 24.04 live-server + pacchetto lubuntu-desktop
+# Target VM: lubuntu24.04 / lubuntu24
+# =============================================================================
+autoinstall:
+  version: 1
+
+  locale: it_IT.UTF-8
+  keyboard:
+    layout: it
+    variant: ''
+
+  identity:
+    hostname: lubuntu24
+    realname: Manzolo
+    username: manzolo
+    # Hash generato con: openssl passwd -6 "manzolo"
+    password: '$6$xAz1OOYvRK3.5IdZ$sgTB7qeJUZ7QG62n2AGN146CRBfwwAeWMYHdLZk/sZYSvWub.APwbCwMfSnbteh7/78mWFWzHFoxEZgwV/T/H/'
+
+  network:
+    network:
+      version: 2
+      ethernets:
+        any:
+          match:
+            name: 'en*'
+          dhcp4: true
+
+  storage:
+    layout:
+      name: lvm
+      match:
+        size: largest
+
+  ssh:
+    install-server: false
+
+  packages:
+    - lubuntu-desktop
+    - qemu-guest-agent
+    - spice-vdagent
+    - openvpn
+    - network-manager-openvpn
+    - network-manager-openvpn-gnome
+    - bind9-dnsutils
+    - aspell
+    - aspell-it
+    - bpfcc-tools
+    - bpftrace
+    - python3-bpfcc
+    - linux-generic-hwe-24.04
+
+  late-commands:
+    - curtin in-target -- systemctl set-default graphical.target
+    - curtin in-target -- systemctl enable sddm
+    - curtin in-target -- systemctl enable qemu-guest-agent
+    - curtin in-target -- systemctl enable spice-vdagent
+    - curtin in-target -- mkdir -p /mnt/shared
+    - curtin in-target -- bash -c 'printf "host_shared\t/mnt/shared\tvirtiofs\tnofail,x-systemd.automount,x-systemd.idle-timeout=60\t0\t0\n" >> /etc/fstab'
+    - curtin in-target -- mkdir -p /etc/skel/Scrivania /etc/skel/Desktop
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/shared
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Scrivania/shared
+    - curtin in-target -- ln -sfn /mnt/shared /etc/skel/Desktop/shared
+    - curtin in-target -- bash -c 'if [ -d /home/manzolo ]; then mkdir -p /home/manzolo/Scrivania /home/manzolo/Desktop; chown -R manzolo:manzolo /home/manzolo/Scrivania /home/manzolo/Desktop; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Scrivania/shared; runuser -u manzolo -- ln -sfn /mnt/shared /home/manzolo/Desktop/shared; fi'
+
+  shutdown: poweroff

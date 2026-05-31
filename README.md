@@ -15,6 +15,7 @@ virt-manager-lab/
 │   ├── install-debian13.sh        # Debian 13 unattended (preseed)
 │   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
 │   ├── install-ubuntu26.04.sh     # Ubuntu 26.04 LTS unattended (autoinstall)
+│   ├── install-lubuntu24.04.sh    # Lubuntu 24.04 LTS unattended (autoinstall)
 │   ├── win10/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
@@ -29,6 +30,7 @@ virt-manager-lab/
 ├── Debian13-preseed.cfg           # configurazione preseed Debian
 ├── ubuntu24.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 24.04
 ├── ubuntu26.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 26.04
+├── lubuntu24.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 24.04
 └── vms/                           # documentazione di ogni VM (hardware, pacchetti, note)
 ```
 
@@ -84,7 +86,7 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu24`, `win10`, `win11`, `win7u`.
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:
@@ -158,6 +160,17 @@ echo S | bash scripts/install-ubuntu26.04.sh
 
 > **Nota:** lo script Ubuntu 26.04 rileva automaticamente l'`os-variant` disponibile
 > (`ubuntu26.04` se presente nel db osinfo, altrimenti fallback a `ubuntu25.10`).
+
+### Esempio — Lubuntu 24.04
+
+```bash
+make lubuntu24
+make reinstall-lubuntu24
+```
+
+Lo script usa l'ISO Ubuntu 24.04 live-server con Subiquity/autoinstall e installa
+`lubuntu-desktop`. Questa scelta evita di dipendere dall'automazione
+dell'installer grafico Calamares dell'ISO Lubuntu.
 
 ### Esempio — Windows 7 Ultimate
 
@@ -254,6 +267,7 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 |---|---|---|
 | ubuntu24.04 | Ubuntu 24.04.3 LTS | GNOME 46, HWE kernel, virtiofs |
 | ubuntu26.04 | Ubuntu 26.04 LTS | GNOME 50, HWE kernel, virtiofs |
+| lubuntu24.04 | Lubuntu 24.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |

@@ -59,7 +59,7 @@
 | Unattend    | `scripts/win11/autounattend.xml`          |
 | ISO Windows | `storage/Iso/Windows/Win11_24H2_Italian_x64.iso` |
 | ISO virtio  | `storage/Iso/addons/virtio-win-0.1.285.iso` |
-| Utente      | manzolo / Password1!                      |
+| Utente      | da `scripts/lab.env` (default: `manzolo` / `manzolo`) |
 | Hostname    | Windows11-Lab                             |
 | Lingua      | it-IT                                     |
 

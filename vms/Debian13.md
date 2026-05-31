@@ -79,7 +79,7 @@ File coinvolti:
 | File | Scopo |
 |------|-------|
 | `virt-manager/scripts/install-debian13.sh` | Script principale (scarica ISO se mancante, cancella VM esistente chiedendo conferma, ricostruisce ISO con preseed, lancia virt-install) |
-| `virt-manager/Debian13-preseed.cfg` | Preseed Debian: locale IT, utente manzolo, standard task dal DVD, GNOME + Apache + Docker + dev tools via late_command dalla rete |
+| `virt-manager/Debian13-preseed.cfg` | Template preseed Debian: locale IT, utente da `scripts/lab.env`, standard task dal DVD, GNOME + Apache + Docker + dev tools via late_command dalla rete |
 | `storage/Iso/Distro/debian-13-preseed.iso` | ISO con preseed integrato (generata dallo script) |
 
 ### Strategia preseed
@@ -96,5 +96,5 @@ via apt da `deb.debian.org` dopo che la rete è già attiva.
 - RNG: virtio
 - Memballoon: virtio
 - Boot menu abilitato
-- Utente: `manzolo` (sudo), password: `manzolo`
+- Utente e password da `scripts/lab.env` (default: `manzolo` / `manzolo`)
 - **Apache2 e Docker CE installati e abilitati**

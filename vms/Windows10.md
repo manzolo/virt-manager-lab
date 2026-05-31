@@ -100,4 +100,4 @@
 - ISO generata: `storage/Iso/Windows/Windows10-autounattend-noprompt.iso`
 - Boot noprompt: `efisys_noprompt.bin` + `bootfix.bin` vuoto + ordine `hd,cdrom`
 - Post-install: `SetupComplete.cmd` installa VirtIO guest tools, WinFSP, Firefox 151.0.2 x64 it e Notepad++ 8.6.4 prima del primo login; log in `C:\install-tools.log`
-- Credenziali unattended: utente `manzolo`, password `manzolo`
+- Credenziali unattended da `scripts/lab.env` (default: `manzolo` / `manzolo`)

@@ -12,12 +12,17 @@ Il repo raccoglie tutto quello che serve per ricreare da zero le VM del lab: scr
 virt-manager-lab/
 ├── Makefile                       # comandi install/start/shutdown/status per tutte le VM
 ├── scripts/
+│   ├── lab.env                    # credenziali e percorsi centralizzati (VM_USER, VM_PASS, VM_BASE_DIR…)
 │   ├── install-debian13.sh        # Debian 13 unattended (preseed)
 │   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
 │   ├── install-ubuntu26.04.sh     # Ubuntu 26.04 LTS unattended (autoinstall)
 │   ├── install-lubuntu20.04.sh    # Lubuntu 20.04 LTS unattended (autoinstall)
 │   ├── install-lubuntu22.04.sh    # Lubuntu 22.04 LTS unattended (autoinstall)
 │   ├── install-lubuntu24.04.sh    # Lubuntu 24.04 LTS unattended (autoinstall)
+│   ├── install-kubuntu22.04.sh    # Kubuntu 22.04 LTS unattended (wrapper flavor)
+│   ├── install-xubuntu22.04.sh    # Xubuntu 22.04 LTS unattended (wrapper flavor)
+│   ├── install-mate22.04.sh       # Ubuntu MATE 22.04 LTS unattended (wrapper flavor)
+│   ├── install-budgie22.04.sh     # Ubuntu Budgie 22.04 LTS unattended (wrapper flavor)
 │   ├── win10/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
@@ -35,6 +40,7 @@ virt-manager-lab/
 ├── lubuntu20.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 20.04
 ├── lubuntu22.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 22.04
 ├── lubuntu24.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 24.04
+├── ubuntu-flavor22.04-autoinstall.yaml # template comune flavor 22.04
 └── vms/                           # documentazione di ogni VM (hardware, pacchetti, note)
 ```
 
@@ -90,7 +96,7 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `win10`, `win11`, `win7u`.
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:
@@ -130,6 +136,14 @@ Se vuoi interrogare l'ID numerico libvirt, usa direttamente `virsh`:
 ```bash
 virsh dominfo 2
 ```
+
+I profili Ubuntu e Lubuntu configurano anche il login automatico dell'utente
+definito in `scripts/lab.env`: GDM per Ubuntu/GNOME, SDDM per Lubuntu/LXQt.
+I flavor 22.04 aggiuntivi usano SDDM per Kubuntu e LightDM per Xubuntu, Ubuntu
+MATE e Ubuntu Budgie.
+
+I profili desktop impostano anche Plymouth per mostrare la splash del flavor al
+boot quando disponibile: spinner Ubuntu, logo Lubuntu/Kubuntu/Xubuntu/MATE/Budgie.
 
 Ogni script fa tutto in autonomia:
 
@@ -197,6 +211,18 @@ make reinstall-lubuntu22
 La VM `lubuntu22.04` usa 2 GB RAM, 2 vCPU e disco da 30 GB. La base e' Ubuntu
 22.04 live-server con Subiquity/autoinstall e pacchetto `lubuntu-desktop`.
 
+### Esempio — flavor Ubuntu 22.04
+
+```bash
+make kubuntu22
+make xubuntu22
+make mate22
+make budgie22
+```
+
+Questi profili usano lo stesso template autoinstall comune e cambiano solo
+pacchetto desktop, display manager e risorse della VM.
+
 ### Esempio — Windows 7 Ultimate
 
 ```bash
@@ -244,7 +270,7 @@ Ogni script installa un sistema GNOME completo con questi pacchetti aggiuntivi:
 | `aspell` | correttore ortografico |
 | `linux-generic-hwe-*` | kernel HWE più recente |
 
-Credenziali default: utente **`manzolo`**, password **`manzolo`** — cambia l'hash nei YAML/preseed prima di usare in ambienti non isolati.
+Credenziali default: utente **`manzolo`**, password **`manzolo`** — per cambiarle modifica solo `scripts/lab.env` (rigenera `VM_PASS_HASH` con `openssl passwd -6 "<nuova_password>"`). I YAML, preseed e XML sono template con placeholder e vengono materializzati a runtime dagli script.
 
 ---
 
@@ -294,6 +320,10 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | lubuntu20.04 | Lubuntu 20.04 LTS | LXQt, VM leggera 2 GB RAM / 25 GB disco |
 | lubuntu22.04 | Lubuntu 22.04 LTS | LXQt, 2 GB RAM / 30 GB disco |
 | lubuntu24.04 | Lubuntu 24.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
+| kubuntu22.04 | Kubuntu 22.04 LTS | KDE Plasma, 3 GB RAM / 35 GB disco |
+| xubuntu22.04 | Xubuntu 22.04 LTS | Xfce, 2 GB RAM / 30 GB disco |
+| ubuntu-mate22.04 | Ubuntu MATE 22.04 LTS | MATE, 2 GB RAM / 30 GB disco |
+| ubuntu-budgie22.04 | Ubuntu Budgie 22.04 LTS | Budgie, 2 GB RAM / 30 GB disco |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |

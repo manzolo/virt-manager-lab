@@ -1,8 +1,8 @@
 #cloud-config
 # =============================================================================
-# Lubuntu 24.04 LTS (Noble) — Autoinstall unattended
-# Base installer: Ubuntu 24.04 live-server + pacchetto lubuntu-desktop
-# Target VM: lubuntu24.04 / lubuntu24
+# Lubuntu 20.04 LTS (Focal) — Autoinstall unattended
+# Base installer: Ubuntu 20.04 live-server + pacchetto lubuntu-desktop
+# Target VM: lubuntu20.04 / lubuntu20
 # =============================================================================
 autoinstall:
   version: 1
@@ -13,7 +13,7 @@ autoinstall:
     variant: ''
 
   identity:
-    hostname: lubuntu24
+    hostname: lubuntu20
     realname: Manzolo
     username: manzolo
     # Hash generato con: openssl passwd -6 "manzolo"
@@ -50,7 +50,7 @@ autoinstall:
     - bpfcc-tools
     - bpftrace
     - python3-bpfcc
-    - linux-generic-hwe-24.04
+    - linux-generic-hwe-20.04
 
   late-commands:
     - curtin in-target -- systemctl set-default graphical.target

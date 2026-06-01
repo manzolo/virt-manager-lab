@@ -166,7 +166,7 @@ th{color:#9aa0a6;font-weight:600}
 .badge{padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700}
 .b-PASS{background:#10391f;color:#7ee2a8} .b-FAIL{background:#3a1620;color:#f3a0b0} .b-WARN{background:#3a3416;color:#e8d488}
 .b-RUNNING{background:#16304a;color:#8ec6f0} .b-PENDING{background:#23262e;color:#9aa0a6} .b-NO-RUN{background:#3a1620;color:#f3a0b0}
-img{max-width:320px;border:1px solid #262b36;border-radius:6px;display:block}
+img.shot{max-width:150px;height:auto;border:1px solid #262b36;border-radius:6px;display:block;cursor:zoom-in}
 details{color:#c2c7cf} summary{cursor:pointer;color:#9aa0a6}
 .det{color:#f3a0b0;font-size:13px}
 </style></head><body>
@@ -197,7 +197,7 @@ HEAD
       ss=$(awk -F'\t' '$1=="sessions"{print $2}' "$r"); pk=$(awk -F'\t' '$1=="pkg"{print $2}' "$r")
       dur=$(printf '%dm%02ds' $((se/60)) $((se%60)))
       local img="screens/$id.png"; local imgcell="—"
-      [ -f "$OUT/screens/$id.png" ] && imgcell="<a href=\"$img\"><img src=\"$img\"></a>"
+      [ -f "$OUT/screens/$id.png" ] && imgcell="<a href=\"$img\" target=\"_blank\" rel=\"noopener\" title=\"apri a piena risoluzione\"><img class=\"shot\" src=\"$img\"></a>"
       local logs="<details><summary>log</summary><a href=\"logs/$id-install.log\">install.log</a>"
       [ -f "$OUT/logs/$id-apt-history.txt" ] && logs="$logs · <a href=\"logs/$id-apt-history.txt\">apt</a>"
       [ -f "$OUT/logs/$id-dpkg-tail.txt" ] && logs="$logs · <a href=\"logs/$id-dpkg-tail.txt\">dpkg</a>"

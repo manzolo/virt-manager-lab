@@ -13,7 +13,7 @@
 # ATTENZIONE: REINSTALLA (cancella e ricrea) le VM elencate in test-all.env.
 
 set -uo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_DIR"
 source "$SCRIPT_DIR/test-all.env"
@@ -26,6 +26,35 @@ REPORT="$OUT/report.html"
 
 vmstate() { LC_ALL=C virsh domstate "$1" 2>/dev/null | head -n1; }
 ga_ready() { virsh qemu-agent-command "$1" '{"execute":"guest-ping"}' >/dev/null 2>&1; }
+
+shutdown_after_test() {
+  local vm="$1" dl s
+  [ "$(vmstate "$vm")" = "running" ] || return 0
+  virsh shutdown "$vm" >/dev/null 2>&1 || true
+  dl=$(( $(date +%s) + TEST_SHUTDOWN_TIMEOUT ))
+  while :; do
+    s="$(vmstate "$vm")"
+    [ "$s" = "shut off" ] && return 0
+    [ "$(date +%s)" -ge "$dl" ] && break
+    sleep 5
+  done
+  virsh destroy "$vm" >/dev/null 2>&1 || true
+}
+
+capture_screenshot() {
+  local id="$1" vm="$2" try png_size
+  for try in 1 2 3; do
+    virsh send-key "$vm" KEY_SPACE >/dev/null 2>&1 || true
+    sleep 2
+    if virsh screenshot "$vm" "$OUT/screens/$id.ppm" >/dev/null 2>&1; then
+      convert "$OUT/screens/$id.ppm" "$OUT/screens/$id.png" 2>/dev/null && rm -f "$OUT/screens/$id.ppm"
+    fi
+    png_size="$(stat -c %s "$OUT/screens/$id.png" 2>/dev/null || echo 0)"
+    [ "$png_size" -ge 4096 ] && return 0
+    virsh send-key "$vm" KEY_ESC >/dev/null 2>&1 || true
+  done
+  return 1
+}
 
 # Esegue cmd nel guest via guest-agent. Stampa stdout; ritorna l'exit code del comando.
 ga_run() {
@@ -108,9 +137,11 @@ run_one() {
   [ -z "$status" ] && { status="FAIL"; phase="?"; detail="esito indeterminato"; }
 
   # Screenshot
-  if virsh screenshot "$vm" "$OUT/screens/$id.ppm" >/dev/null 2>&1; then
-    convert "$OUT/screens/$id.ppm" "$OUT/screens/$id.png" 2>/dev/null && rm -f "$OUT/screens/$id.ppm"
+  if ! capture_screenshot "$id" "$vm"; then
+    detail="${detail:+$detail; }screenshot assente o probabilmente nero"
+    [ "$status" = "PASS" ] && status="WARN"
   fi
+  shutdown_after_test "$vm"
   _write_result "$id" "$vm" "$status" "$phase" "$(( $(date +%s)-t0 ))" "$detail" "$dm" "$shared" "$sess" "$pkg"
   echo ">>> [$id] $status ($phase) $(date +%T)"
 }
@@ -149,6 +180,7 @@ gen_html() {
       RUNNING|PENDING) running=$((running+1));; *) fail=$((fail+1));;
     esac
   done
+  total=$((total + ${#TEST_EXCLUDED_ITEMS[@]}))
   {
     cat <<HEAD
 <!doctype html><html lang="it"><head><meta charset="utf-8">
@@ -173,7 +205,7 @@ details{color:#c2c7cf} summary{cursor:pointer;color:#9aa0a6}
 <h1>VM Lab — Test end-to-end</h1>
 <div class="sub">Run $RUN_TS · parallelismo $TEST_PARALLEL · host $(hostname)</div>
 <div class="summary">
-  <div class="card tot">Totale: $total</div>
+  <div class="card tot">Totale gestite: $total</div>
   <div class="card ok">PASS: $pass</div>
   <div class="card ko">FAIL: $fail</div>
   <div class="card wa">WARN: $warn</div>
@@ -204,6 +236,10 @@ HEAD
       [ -f "$OUT/logs/$id-lab-desktop.txt" ] && logs="$logs · <a href=\"logs/$id-lab-desktop.txt\">firstboot</a>"
       logs="$logs</details>"
       echo "<tr><td>$id</td><td>$vm</td><td><span class=\"badge b-${st}\">$st</span></td><td>$ph</td><td>$dur</td><td>${dmv:-–}</td><td>${pk:-–}</td><td>$sh</td><td>$ss</td><td>$imgcell</td><td class=\"det\">${de}<br>$logs</td></tr>"
+    done
+    for item in "${TEST_EXCLUDED_ITEMS[@]}"; do
+      IFS='|' read -r id vm reason <<<"$item"
+      echo "<tr><td>$id</td><td>$vm</td><td><span class=\"badge b-WARN\">EXCLUDED</span></td><td>non testata</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td class=\"det\">$reason</td></tr>"
     done
     cat <<FOOT
 </tbody></table>

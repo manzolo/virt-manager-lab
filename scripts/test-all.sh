@@ -231,6 +231,12 @@ done
 gen_html
 echo "REPORT HTML (gia' apribile, si auto-aggiorna ogni 15s): $REPORT"
 
+# Apre il report nel browser di default (se c'e' un display). Disabilita con TEST_OPEN_BROWSER=0.
+if [ "${TEST_OPEN_BROWSER:-1}" = "1" ] && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v xdg-open >/dev/null 2>&1; then
+  xdg-open "$REPORT" >/dev/null 2>&1 &
+  echo "Apro il report nel browser..."
+fi
+
 # Refresher live finche' non compare il sentinel .done
 ( while [ ! -f "$OUT/.done" ]; do gen_html; sleep 15; done ) &
 refresher=$!

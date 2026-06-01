@@ -37,28 +37,19 @@ autoinstall:
   ssh:
     install-server: false
 
-  # Desktop e tool installati nella fase principale di curtin/subiquity
-  # (come lubuntu): piu' robusto della late-command nell'ambiente live.
+  # 22.04/24.04 installano il desktop qui. 26.04 installa solo base+tool:
+  # il desktop viene installato al primo boot per evitare il crash overlayfs
+  # del kernel dell'installer live 26.04.
   packages:
-    - __DESKTOP_PACKAGE__
-    - __PLYMOUTH_PACKAGE__
-    - qemu-guest-agent
-    - spice-vdagent
-    - openvpn
-    - network-manager-openvpn
-    - network-manager-openvpn-gnome
-    - bind9-dnsutils
-    - aspell
-    - aspell-it
-    - __HWE_KERNEL_PACKAGE__
+__INSTALLER_PACKAGES__
 
   late-commands:
-    - curtin in-target -- systemctl set-default graphical.target
-    - curtin in-target -- mkdir -p /etc/sddm.conf.d /etc/lightdm/lightdm.conf.d
+    - curtin in-target -- mkdir -p /etc/sddm.conf.d /etc/lightdm/lightdm.conf.d /etc/gdm3
     - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=__SDDM_SESSION__\n" > /etc/sddm.conf.d/autologin.conf'
     - curtin in-target -- bash -c 'printf "[Seat:*]\nautologin-user=__VM_USER__\nautologin-user-timeout=0\nautologin-session=__LIGHTDM_SESSION__\n" > /etc/lightdm/lightdm.conf.d/50-autologin.conf'
-    - curtin in-target -- bash -c 'systemctl enable __DISPLAY_MANAGER__ || true'
-    - curtin in-target -- bash -c 'if [ -n "__PLYMOUTH_THEME_PATH__" ] && [ -f "__PLYMOUTH_THEME_PATH__" ]; then update-alternatives --set default.plymouth "__PLYMOUTH_THEME_PATH__"; update-initramfs -u; fi'
+    - curtin in-target -- bash -c 'printf "[daemon]\nAutomaticLoginEnable=true\nAutomaticLogin=__VM_USER__\n" > /etc/gdm3/custom.conf'
+__GRAPHICAL_LATE_COMMANDS__
+__FIRSTBOOT_LATE_COMMANDS__
     - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent

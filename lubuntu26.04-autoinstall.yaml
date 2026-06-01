@@ -1,7 +1,7 @@
 #cloud-config
 # =============================================================================
 # Lubuntu 26.04 LTS — Autoinstall unattended
-# Base installer: Ubuntu 26.04 live-server + pacchetto lubuntu-desktop
+# Base installer: Ubuntu 26.04 live-server, desktop installato al primo boot
 # Target VM: lubuntu26.04 / lubuntu26
 # =============================================================================
 autoinstall:
@@ -37,9 +37,10 @@ autoinstall:
   ssh:
     install-server: false
 
+  # NB: lubuntu-desktop NON e' qui: su 26.04 l'unpack del desktop nell'installer
+  # (overlayfs della live ISO) va in kernel oops. Viene installato al primo boot
+  # sul sistema reale (ext4) dal servizio lab-desktop (vedi late-commands).
   packages:
-    - lubuntu-desktop
-    - plymouth-theme-lubuntu-logo
     - qemu-guest-agent
     - spice-vdagent
     - openvpn
@@ -51,11 +52,12 @@ autoinstall:
     - linux-generic-hwe-26.04
 
   late-commands:
-    - curtin in-target -- systemctl set-default graphical.target
     - curtin in-target -- mkdir -p /etc/sddm.conf.d
     - curtin in-target -- bash -c 'printf "[Autologin]\nUser=__VM_USER__\nSession=Lubuntu\n" > /etc/sddm.conf.d/autologin.conf'
-    - curtin in-target -- bash -c 'systemctl enable sddm || true'
-    - curtin in-target -- bash -c 'if [ -f /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth ]; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth; update-initramfs -u; fi'
+    # Desktop installato al PRIMO BOOT sul sistema reale (ext4), non nell'installer
+    # (su 26.04 l'unpack del desktop in overlayfs della live ISO va in kernel oops).
+    - curtin in-target -- bash -c 'printf "#!/bin/sh\nexec >>/var/log/lab-desktop.log 2>&1\nset -ex\nexport DEBIAN_FRONTEND=noninteractive\nprintf \"#!/bin/sh\\nexit 101\\n\" > /usr/sbin/policy-rc.d\nchmod +x /usr/sbin/policy-rc.d\ntrap \"rm -f /usr/sbin/policy-rc.d\" EXIT\napt-get update\napt-get install -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold lubuntu-desktop plymouth-theme-lubuntu-logo\nrm -f /usr/sbin/policy-rc.d\ntrap - EXIT\nsystemctl set-default graphical.target\nsystemctl enable sddm\nif [ -f /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth ] && update-alternatives --query default.plymouth >/dev/null 2>&1; then update-alternatives --set default.plymouth /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth; update-initramfs -u; fi\nsystemctl disable lab-desktop.service\nsystemctl reboot\n" > /usr/local/sbin/lab-desktop.sh; chmod +x /usr/local/sbin/lab-desktop.sh'
+    - curtin in-target -- bash -c 'printf "[Unit]\nDescription=Lab desktop first boot install\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/lab-desktop.sh\nRemainAfterExit=yes\nTimeoutStartSec=0\n\n[Install]\nWantedBy=multi-user.target\n" > /etc/systemd/system/lab-desktop.service; systemctl enable lab-desktop.service'
     - curtin in-target -- bash -c 'sed -i "s/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash\"/" /etc/default/grub && update-grub'
     - curtin in-target -- systemctl enable qemu-guest-agent
     - curtin in-target -- systemctl enable spice-vdagent

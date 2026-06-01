@@ -83,6 +83,8 @@ help:
 		'  make status-<id>          Dettaglio libvirt della VM gestita' \
 		'  make destroy-<id>         Spegnimento forzato' \
 		'  make undefine-<id>        Rimuove definizione libvirt, non il disco' \
+		'  make clean-<id>           Rimuove VM + suo disco qcow2 (non ISO/altri dischi)' \
+		'  make all                  Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
 		'  make report               Rigenera vm-report.html' \
 		'' \
 		'NOTE' \
@@ -155,7 +157,7 @@ report:
 	bash scripts/vm-report.sh vm-report.html
 
 define INSTALL_TARGETS
-.PHONY: $(1) install-$(1) reinstall-$(1) iso-$(1) status-$(1) start-$(1) shutdown-$(1) destroy-$(1) undefine-$(1)
+.PHONY: $(1) install-$(1) reinstall-$(1) iso-$(1) status-$(1) start-$(1) shutdown-$(1) destroy-$(1) undefine-$(1) clean-$(1)
 
 $(1): install-$(1)
 
@@ -187,6 +189,9 @@ destroy-$(1):
 undefine-$(1):
 	virsh undefine "$$(VM_$(1))" --snapshots-metadata --nvram || \
 	virsh undefine "$$(VM_$(1))" --snapshots-metadata
+
+clean-$(1):
+	bash scripts/clean-vm.sh "$$(VM_$(1))"
 endef
 
 $(eval $(call INSTALL_TARGETS,debian13))
@@ -211,3 +216,14 @@ $(eval $(call INSTALL_TARGETS,budgie26))
 $(eval $(call INSTALL_TARGETS,win10))
 $(eval $(call INSTALL_TARGETS,win11))
 $(eval $(call INSTALL_TARGETS,win7u))
+
+# Pulizia di tutte le VM gestite (VM + disco qcow2 principale, MAI ISO/altri dischi).
+# Chiede conferma perche' include anche le VM Windows (reinstall lunghe).
+.PHONY: clean-all all
+clean-all all:
+	@echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale di TUTTE le VM gestite."
+	@echo "  ISO e volumi in altri pool NON vengono toccati."
+	@echo "  VM coinvolte: $(VMS)"
+	@read -rp "Confermi la rimozione di tutte? [s/N] " a; \
+	if [ "$$a" != "s" ] && [ "$$a" != "S" ]; then echo "Annullato."; exit 0; fi; \
+	for vm in $(VMS); do bash scripts/clean-vm.sh "$$vm"; done

@@ -13,6 +13,8 @@ STORAGE="$VM_BASE_DIR/storage"
 REPO_DIR="$VM_BASE_DIR/virt-manager"
 
 VM_NAME="lubuntu26.04"
+DESKTOP_PACKAGE="lubuntu-desktop"
+DISPLAY_MANAGER="sddm"
 DISK_PATH="$STORAGE/hd/lubuntu26.04.qcow2"
 DISK_SIZE="35G"
 ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-26.04-live-server-amd64.iso"
@@ -20,6 +22,11 @@ ISO_AUTO="$STORAGE/Iso/Distro/lubuntu-26.04-autoinstall.iso"
 AUTOINSTALL_TEMPLATE="$REPO_DIR/lubuntu26.04-autoinstall.yaml"
 ISO_URL="https://releases.ubuntu.com/26.04/ubuntu-26.04-live-server-amd64.iso"
 SHARED_DIR="$STORAGE/shared"
+FIRSTBOOT_AUTOSTART="${FIRSTBOOT_AUTOSTART:-true}"
+FIRSTBOOT_WAIT_DESKTOP="${FIRSTBOOT_WAIT_DESKTOP:-$FIRSTBOOT_AUTOSTART}"
+FIRSTBOOT_BASE_TIMEOUT="${FIRSTBOOT_BASE_TIMEOUT:-7200}"
+FIRSTBOOT_DESKTOP_TIMEOUT="${FIRSTBOOT_DESKTOP_TIMEOUT:-14400}"
+FIRSTBOOT_POLL_INTERVAL="${FIRSTBOOT_POLL_INTERVAL:-30}"
 
 for cmd in wget xorriso qemu-img virt-install virsh; do
     command -v "$cmd" >/dev/null || { echo "Comando mancante: $cmd"; exit 1; }
@@ -39,6 +46,87 @@ else
     OS_VARIANT=ubuntu24.04
 fi
 echo "OS variant: $OS_VARIANT"
+
+wait_for_vm_state() {
+    local expected="$1" timeout="$2" label="$3"
+    local elapsed=0 state
+
+    while (( elapsed <= timeout )); do
+        state="$(LC_ALL=C virsh domstate "$VM_NAME" 2>/dev/null | head -n 1 || true)"
+        if [[ "$state" == "$expected" ]]; then
+            echo "$label: $state"
+            return 0
+        fi
+
+        echo "$label: ${state:-non definita} (${elapsed}s/${timeout}s)"
+        sleep "$FIRSTBOOT_POLL_INTERVAL"
+        elapsed=$((elapsed + FIRSTBOOT_POLL_INTERVAL))
+    done
+
+    echo "Timeout aspettando '$expected' per $VM_NAME ($label)."
+    return 1
+}
+
+guest_agent_ready() {
+    virsh qemu-agent-command "$VM_NAME" '{"execute":"guest-ping"}' >/dev/null 2>&1
+}
+
+guest_exec_quiet() {
+    local cmd="$1" encoded payload output pid status exitcode
+
+    encoded="$(printf '%s' "$cmd" | base64 | tr -d '\n')"
+    payload="{\"execute\":\"guest-exec\",\"arguments\":{\"path\":\"/bin/sh\",\"arg\":[\"-lc\",\"printf %s $encoded | base64 -d | /bin/sh\"],\"capture-output\":true}}"
+
+    output="$(virsh qemu-agent-command "$VM_NAME" "$payload" 2>/dev/null)" || return 125
+    pid="$(sed -n 's/.*"pid":\([0-9][0-9]*\).*/\1/p' <<< "$output")"
+    [[ -n "$pid" ]] || return 125
+
+    for _ in {1..60}; do
+        status="$(virsh qemu-agent-command "$VM_NAME" "{\"execute\":\"guest-exec-status\",\"arguments\":{\"pid\":$pid}}" 2>/dev/null)" || return 125
+        if [[ "$status" == *'"exited":true'* ]]; then
+            exitcode="$(sed -n 's/.*"exitcode":\([0-9][0-9]*\).*/\1/p' <<< "$status")"
+            return "${exitcode:-1}"
+        fi
+        sleep 1
+    done
+
+    return 124
+}
+
+wait_for_firstboot_desktop() {
+    local elapsed=0 check_cmd
+
+    check_cmd="systemctl get-default | grep -qx graphical.target && systemctl is-active --quiet ${DISPLAY_MANAGER} && dpkg-query -W ${DESKTOP_PACKAGE} >/dev/null 2>&1 && ! systemctl is-enabled --quiet lab-desktop.service"
+
+    while (( elapsed <= FIRSTBOOT_DESKTOP_TIMEOUT )); do
+        if guest_agent_ready && guest_exec_quiet "$check_cmd"; then
+            echo "Desktop first boot completato per $VM_NAME."
+            return 0
+        fi
+
+        echo "Attendo desktop first boot di $VM_NAME (${elapsed}s/${FIRSTBOOT_DESKTOP_TIMEOUT}s)..."
+        sleep "$FIRSTBOOT_POLL_INTERVAL"
+        elapsed=$((elapsed + FIRSTBOOT_POLL_INTERVAL))
+    done
+
+    echo "Timeout aspettando il desktop first boot di $VM_NAME."
+    echo "Diagnosi guest: /var/log/lab-desktop.log, /var/log/apt/term.log, systemctl status lab-desktop.service"
+    return 1
+}
+
+run_firstboot_if_requested() {
+    [[ "$FIRSTBOOT_AUTOSTART" == "true" ]] || return 0
+
+    echo ""
+    echo "[+] Attendo lo spegnimento dell'autoinstall base di $VM_NAME..."
+    wait_for_vm_state "shut off" "$FIRSTBOOT_BASE_TIMEOUT" "Autoinstall base" || return 1
+
+    echo "[+] Avvio $VM_NAME per installare il desktop al primo boot..."
+    virsh start "$VM_NAME"
+
+    [[ "$FIRSTBOOT_WAIT_DESKTOP" == "true" ]] || return 0
+    wait_for_firstboot_desktop
+}
 
 if [[ ! -f "$ISO_ORIG" ]]; then
     echo "ISO originale non trovata: $ISO_ORIG"
@@ -141,5 +229,11 @@ echo ""
 echo "[+] VM $VM_NAME avviata, installazione in corso."
 echo "    Connettiti con: virt-viewer $VM_NAME"
 echo ""
-echo "    Al termine la VM si spegne automaticamente."
-echo "    Per avviarla: virsh start $VM_NAME"
+if [[ "$FIRSTBOOT_AUTOSTART" == "true" ]]; then
+    echo "    Al termine della base install la VM viene riavviata automaticamente"
+    echo "    per completare il desktop al primo boot."
+    run_firstboot_if_requested
+else
+    echo "    Al termine la VM si spegne automaticamente."
+    echo "    Per avviarla: virsh start $VM_NAME"
+fi

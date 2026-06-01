@@ -105,7 +105,7 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `lubuntu26`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `win10`, `win11`, `win7u`.
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:
@@ -242,6 +242,15 @@ make budgie26
 Questi profili usano lo stesso template autoinstall comune e cambiano versione
 Ubuntu, pacchetto desktop, display manager, Plymouth e risorse della VM.
 
+Su 26.04 il desktop viene installato al primo boot dal servizio
+`lab-desktop.service`, dopo l'installazione base. Questo evita i crash osservati
+durante l'unpack dei desktop nell'ambiente live dell'installer 26.04, mantenendo
+autologin, Plymouth e virtiofs come nei profili 24.04. Gli script 26.04
+orchestrano automaticamente anche questo passaggio: attendono lo spegnimento
+dell'installazione base, riavviano la VM e terminano solo quando il desktop e'
+installato e il display manager e' attivo. Per disabilitare l'attesa:
+`FIRSTBOOT_WAIT_DESKTOP=false make reinstall-kubuntu26`.
+
 ### Esempio — Windows 7 Ultimate
 
 ```bash
@@ -339,7 +348,7 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | lubuntu20.04 | Lubuntu 20.04 LTS | LXQt, VM leggera 2 GB RAM / 25 GB disco |
 | lubuntu22.04 | Lubuntu 22.04 LTS | LXQt, 2 GB RAM / 30 GB disco |
 | lubuntu24.04 | Lubuntu 24.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
-| lubuntu26.04 | Lubuntu 26.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
+| lubuntu26.04 | Lubuntu 26.04 LTS | LXQt, desktop installato al primo boot |
 | kubuntu22.04 | Kubuntu 22.04 LTS | KDE Plasma, 4 GB RAM / 35 GB disco |
 | xubuntu22.04 | Xubuntu 22.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
 | ubuntu-mate22.04 | Ubuntu MATE 22.04 LTS | MATE, 4 GB RAM / 30 GB disco |
@@ -348,10 +357,10 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | xubuntu24.04 | Xubuntu 24.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
 | ubuntu-mate24.04 | Ubuntu MATE 24.04 LTS | MATE, 4 GB RAM / 30 GB disco |
 | ubuntu-budgie24.04 | Ubuntu Budgie 24.04 LTS | Budgie, 4 GB RAM / 30 GB disco |
-| kubuntu26.04 | Kubuntu 26.04 LTS | KDE Plasma, 4 GB RAM / 35 GB disco |
-| xubuntu26.04 | Xubuntu 26.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
-| ubuntu-mate26.04 | Ubuntu MATE 26.04 LTS | MATE, 4 GB RAM / 30 GB disco |
-| ubuntu-budgie26.04 | Ubuntu Budgie 26.04 LTS | Budgie, 4 GB RAM / 30 GB disco |
+| kubuntu26.04 | Kubuntu 26.04 LTS | KDE Plasma, desktop installato al primo boot |
+| xubuntu26.04 | Xubuntu 26.04 LTS | Xfce, desktop installato al primo boot |
+| ubuntu-mate26.04 | Ubuntu MATE 26.04 LTS | MATE, desktop installato al primo boot |
+| ubuntu-budgie26.04 | Ubuntu Budgie 26.04 LTS | Budgie, desktop installato al primo boot |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |

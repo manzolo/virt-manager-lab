@@ -53,12 +53,14 @@ VM_win7u := Windows7U
 
 WINDOWS_IDS := win10 win11 win7u
 
-.PHONY: help list status report
+.PHONY: help list status report test-all setup setup-check
 help:
 	@printf '%s\n' \
 		'virt-manager-lab - gestione VM unattended' \
 		'' \
 		'USO RAPIDO' \
+		'  make setup                Installa dipendenze + pool/rete libvirt (idempotente)' \
+		'  make setup-check          Verifica l'\''ambiente (sola lettura, exit !=0 se manca qualcosa)' \
 		'  make list                 Mostra ID Makefile e nomi VM libvirt' \
 		'  make status               Stato libvirt + mappa ID Makefile' \
 		'  make <id>                 Installa/crea una VM, es. make win11' \
@@ -86,6 +88,7 @@ help:
 		'  make clean-<id>           Rimuove VM + suo disco qcow2 (non ISO/altri dischi)' \
 		'  make all                  Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
 		'  make report               Rigenera vm-report.html' \
+		'  make test-all [PAR=N]     Test e2e di tutte le VM (reinstall+verifica+report HTML)' \
 		'' \
 		'NOTE' \
 		'  <id> e uno degli ID mostrati da make list, es. win11 o xubuntu24.' \
@@ -153,8 +156,19 @@ status:
 		printf '%-10s %-14s %-10s %s\n' "$$make_id" "$$vm" "$$libvirt_id" "$$state"; \
 	done
 
+setup:
+	bash scripts/setup.sh
+
+setup-check:
+	bash scripts/setup.sh --check
+
 report:
 	bash scripts/vm-report.sh vm-report.html
+
+# Test end-to-end di tutte le VM in test-all.env (reinstall + verifica + report HTML).
+# Parallelismo: make test-all PAR=6  (default 4). REINSTALLA le VM elencate.
+test-all:
+	bash scripts/test-all.sh $(PAR)
 
 define INSTALL_TARGETS
 .PHONY: $(1) install-$(1) reinstall-$(1) iso-$(1) status-$(1) start-$(1) shutdown-$(1) destroy-$(1) undefine-$(1) clean-$(1)

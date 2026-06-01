@@ -2,7 +2,7 @@
 # =============================================================================
 # Ubuntu 24.04 LTS (Noble) — Autoinstall unattended
 # Target VM: ubuntu24.04 / ubuntu24
-# Replica: GNOME 46, bpfcc/bpftrace, openvpn, virtiofs shared, HWE kernel
+# Replica: GNOME 46, openvpn, virtiofs shared, HWE kernel
 # =============================================================================
 autoinstall:
   version: 1

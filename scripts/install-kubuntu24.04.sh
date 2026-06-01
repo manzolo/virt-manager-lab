@@ -3,9 +3,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-export FLAVOR_ID="kubuntu22"
-export FLAVOR_LABEL="Kubuntu 22.04"
-export VM_NAME="kubuntu22.04"
+export UBUNTU_VERSION="24.04"
+export UBUNTU_POINT_VERSION="24.04.4"
+export OS_VARIANT_CANDIDATE="ubuntu24.04"
+export OS_VARIANT_FALLBACK="ubuntu24.04"
+export FLAVOR_ID="kubuntu24"
+export FLAVOR_LABEL="Kubuntu 24.04"
+export VM_NAME="kubuntu24.04"
 export DESKTOP_PACKAGE="kubuntu-desktop"
 export DISPLAY_MANAGER="sddm"
 export SDDM_SESSION="plasma"

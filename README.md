@@ -23,6 +23,14 @@ virt-manager-lab/
 │   ├── install-xubuntu22.04.sh    # Xubuntu 22.04 LTS unattended (wrapper flavor)
 │   ├── install-mate22.04.sh       # Ubuntu MATE 22.04 LTS unattended (wrapper flavor)
 │   ├── install-budgie22.04.sh     # Ubuntu Budgie 22.04 LTS unattended (wrapper flavor)
+│   ├── install-kubuntu24.04.sh    # Kubuntu 24.04 LTS unattended (wrapper flavor)
+│   ├── install-xubuntu24.04.sh    # Xubuntu 24.04 LTS unattended (wrapper flavor)
+│   ├── install-mate24.04.sh       # Ubuntu MATE 24.04 LTS unattended (wrapper flavor)
+│   ├── install-budgie24.04.sh     # Ubuntu Budgie 24.04 LTS unattended (wrapper flavor)
+│   ├── install-kubuntu26.04.sh    # Kubuntu 26.04 LTS unattended (wrapper flavor)
+│   ├── install-xubuntu26.04.sh    # Xubuntu 26.04 LTS unattended (wrapper flavor)
+│   ├── install-mate26.04.sh       # Ubuntu MATE 26.04 LTS unattended (wrapper flavor)
+│   ├── install-budgie26.04.sh     # Ubuntu Budgie 26.04 LTS unattended (wrapper flavor)
 │   ├── win10/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
@@ -40,7 +48,8 @@ virt-manager-lab/
 ├── lubuntu20.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 20.04
 ├── lubuntu22.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 22.04
 ├── lubuntu24.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 24.04
-├── ubuntu-flavor22.04-autoinstall.yaml # template comune flavor 22.04
+├── lubuntu26.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 26.04
+├── ubuntu-flavor22.04-autoinstall.yaml # template comune flavor 22/24/26
 └── vms/                           # documentazione di ogni VM (hardware, pacchetti, note)
 ```
 
@@ -96,7 +105,7 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `lubuntu26`, `win10`, `win11`, `win7u`.
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:
@@ -211,17 +220,27 @@ make reinstall-lubuntu22
 La VM `lubuntu22.04` usa 2 GB RAM, 2 vCPU e disco da 30 GB. La base e' Ubuntu
 22.04 live-server con Subiquity/autoinstall e pacchetto `lubuntu-desktop`.
 
-### Esempio — flavor Ubuntu 22.04
+### Esempio — flavor Ubuntu 22.04 / 24.04 / 26.04
 
 ```bash
 make kubuntu22
 make xubuntu22
 make mate22
 make budgie22
+
+make kubuntu24
+make xubuntu24
+make mate24
+make budgie24
+
+make kubuntu26
+make xubuntu26
+make mate26
+make budgie26
 ```
 
-Questi profili usano lo stesso template autoinstall comune e cambiano solo
-pacchetto desktop, display manager e risorse della VM.
+Questi profili usano lo stesso template autoinstall comune e cambiano versione
+Ubuntu, pacchetto desktop, display manager, Plymouth e risorse della VM.
 
 ### Esempio — Windows 7 Ultimate
 
@@ -320,10 +339,19 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | lubuntu20.04 | Lubuntu 20.04 LTS | LXQt, VM leggera 2 GB RAM / 25 GB disco |
 | lubuntu22.04 | Lubuntu 22.04 LTS | LXQt, 2 GB RAM / 30 GB disco |
 | lubuntu24.04 | Lubuntu 24.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
-| kubuntu22.04 | Kubuntu 22.04 LTS | KDE Plasma, 3 GB RAM / 35 GB disco |
-| xubuntu22.04 | Xubuntu 22.04 LTS | Xfce, 2 GB RAM / 30 GB disco |
-| ubuntu-mate22.04 | Ubuntu MATE 22.04 LTS | MATE, 2 GB RAM / 30 GB disco |
-| ubuntu-budgie22.04 | Ubuntu Budgie 22.04 LTS | Budgie, 2 GB RAM / 30 GB disco |
+| lubuntu26.04 | Lubuntu 26.04 LTS | LXQt, installata via autoinstall server + lubuntu-desktop |
+| kubuntu22.04 | Kubuntu 22.04 LTS | KDE Plasma, 4 GB RAM / 35 GB disco |
+| xubuntu22.04 | Xubuntu 22.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
+| ubuntu-mate22.04 | Ubuntu MATE 22.04 LTS | MATE, 4 GB RAM / 30 GB disco |
+| ubuntu-budgie22.04 | Ubuntu Budgie 22.04 LTS | Budgie, 4 GB RAM / 30 GB disco |
+| kubuntu24.04 | Kubuntu 24.04 LTS | KDE Plasma, 4 GB RAM / 35 GB disco |
+| xubuntu24.04 | Xubuntu 24.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
+| ubuntu-mate24.04 | Ubuntu MATE 24.04 LTS | MATE, 4 GB RAM / 30 GB disco |
+| ubuntu-budgie24.04 | Ubuntu Budgie 24.04 LTS | Budgie, 4 GB RAM / 30 GB disco |
+| kubuntu26.04 | Kubuntu 26.04 LTS | KDE Plasma, 4 GB RAM / 35 GB disco |
+| xubuntu26.04 | Xubuntu 26.04 LTS | Xfce, 4 GB RAM / 30 GB disco |
+| ubuntu-mate26.04 | Ubuntu MATE 26.04 LTS | MATE, 4 GB RAM / 30 GB disco |
+| ubuntu-budgie26.04 | Ubuntu Budgie 26.04 LTS | Budgie, 4 GB RAM / 30 GB disco |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |

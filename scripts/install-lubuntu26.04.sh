@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Installer comune per flavor Ubuntu LTS basati su live-server + autoinstall.
+# Installazione unattended Lubuntu 26.04 LTS — lubuntu26
+# Base: Ubuntu live-server 26.04 + autoinstall + lubuntu-desktop.
+#
+# Uso: bash scripts/install-lubuntu26.04.sh
+#      echo S | bash scripts/install-lubuntu26.04.sh   (non interattivo)
 
 set -euo pipefail
 
@@ -8,37 +12,13 @@ source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
 REPO_DIR="$VM_BASE_DIR/virt-manager"
 
-: "${FLAVOR_ID:?FLAVOR_ID non impostato}"
-: "${FLAVOR_LABEL:?FLAVOR_LABEL non impostato}"
-: "${VM_NAME:?VM_NAME non impostato}"
-: "${DESKTOP_PACKAGE:?DESKTOP_PACKAGE non impostato}"
-: "${DISPLAY_MANAGER:?DISPLAY_MANAGER non impostato}"
-: "${PLYMOUTH_PACKAGE:?PLYMOUTH_PACKAGE non impostato}"
-: "${PLYMOUTH_THEME_PATH:?PLYMOUTH_THEME_PATH non impostato}"
-
-DISK_SIZE="${DISK_SIZE:-30G}"
-MEMORY="${MEMORY:-2048}"
-VCPUS="${VCPUS:-2}"
-SDDM_SESSION="${SDDM_SESSION:-}"
-LIGHTDM_SESSION="${LIGHTDM_SESSION:-}"
-UBUNTU_VERSION="${UBUNTU_VERSION:-22.04}"
-UBUNTU_POINT_VERSION="${UBUNTU_POINT_VERSION:-22.04.5}"
-HWE_KERNEL_PACKAGE="${HWE_KERNEL_PACKAGE:-linux-generic-hwe-${UBUNTU_VERSION}}"
-OS_VARIANT_CANDIDATE="${OS_VARIANT_CANDIDATE:-ubuntu${UBUNTU_VERSION}}"
-OS_VARIANT_FALLBACK="${OS_VARIANT_FALLBACK:-ubuntu22.04}"
-
-if virt-install --os-variant "$OS_VARIANT_CANDIDATE" --print-xml &>/dev/null; then
-    OS_VARIANT="$OS_VARIANT_CANDIDATE"
-else
-    OS_VARIANT="$OS_VARIANT_FALLBACK"
-fi
-echo "OS variant: $OS_VARIANT"
-
-DISK_PATH="$STORAGE/hd/$VM_NAME.qcow2"
-ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-${UBUNTU_POINT_VERSION}-live-server-amd64.iso"
-ISO_AUTO="$STORAGE/Iso/Distro/$FLAVOR_ID-${UBUNTU_POINT_VERSION}-autoinstall.iso"
-AUTOINSTALL_TEMPLATE="$REPO_DIR/ubuntu-flavor22.04-autoinstall.yaml"
-ISO_URL="https://releases.ubuntu.com/${UBUNTU_POINT_VERSION}/ubuntu-${UBUNTU_POINT_VERSION}-live-server-amd64.iso"
+VM_NAME="lubuntu26.04"
+DISK_PATH="$STORAGE/hd/lubuntu26.04.qcow2"
+DISK_SIZE="35G"
+ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-26.04-live-server-amd64.iso"
+ISO_AUTO="$STORAGE/Iso/Distro/lubuntu-26.04-autoinstall.iso"
+AUTOINSTALL_TEMPLATE="$REPO_DIR/lubuntu26.04-autoinstall.yaml"
+ISO_URL="https://releases.ubuntu.com/26.04/ubuntu-26.04-live-server-amd64.iso"
 SHARED_DIR="$STORAGE/shared"
 
 for cmd in wget xorriso qemu-img virt-install virsh; do
@@ -49,6 +29,16 @@ if [[ ! -f "$AUTOINSTALL_TEMPLATE" ]]; then
     echo "Mancante: $AUTOINSTALL_TEMPLATE"
     exit 1
 fi
+
+# os-variant: 26.04 puo' non essere nel db osinfo -> fallback
+if virt-install --os-variant ubuntu26.04 --print-xml &>/dev/null; then
+    OS_VARIANT=ubuntu26.04
+elif virt-install --os-variant ubuntu25.10 --print-xml &>/dev/null; then
+    OS_VARIANT=ubuntu25.10
+else
+    OS_VARIANT=ubuntu24.04
+fi
+echo "OS variant: $OS_VARIANT"
 
 if [[ ! -f "$ISO_ORIG" ]]; then
     echo "ISO originale non trovata: $ISO_ORIG"
@@ -78,29 +68,17 @@ rm -f "$DISK_PATH"
 qemu-img create -f qcow2 -o preallocation=off "$DISK_PATH" "$DISK_SIZE"
 virsh pool-refresh hdd
 
-echo "Preparo ISO autoinstall $FLAVOR_LABEL..."
+echo "Preparo ISO autoinstall Lubuntu..."
 rm -f "$ISO_AUTO"
 
-GRUBCFG_TMP=$(mktemp "/tmp/$FLAVOR_ID-grub.XXXXX")
-META_TMP=$(mktemp "/tmp/$FLAVOR_ID-meta.XXXXX")
-AUTOINSTALL_BASE=$(mktemp "/tmp/$FLAVOR_ID-autoinstall-base.XXXXX.yaml")
-AUTOINSTALL_RENDERED=$(mktemp "/tmp/$FLAVOR_ID-autoinstall.XXXXX.yaml")
+GRUBCFG_TMP=$(mktemp /tmp/lubuntu-grub.cfg.XXXXX)
+META_TMP=$(mktemp /tmp/lubuntu-meta.XXXXX)
+AUTOINSTALL_RENDERED=$(mktemp /tmp/lubuntu26-autoinstall.XXXXX.yaml)
 touch "$META_TMP"
-trap 'rm -f "$GRUBCFG_TMP" "$META_TMP" "$AUTOINSTALL_BASE" "$AUTOINSTALL_RENDERED"' EXIT
+trap 'rm -f "$GRUBCFG_TMP" "$META_TMP" "$AUTOINSTALL_RENDERED"' EXIT
+render_template "$AUTOINSTALL_TEMPLATE" "$AUTOINSTALL_RENDERED"
 
-render_template "$AUTOINSTALL_TEMPLATE" "$AUTOINSTALL_BASE"
-sed \
-    -e "s|__FLAVOR_HOSTNAME__|${FLAVOR_ID}|g" \
-    -e "s|__DESKTOP_PACKAGE__|${DESKTOP_PACKAGE}|g" \
-    -e "s|__DISPLAY_MANAGER__|${DISPLAY_MANAGER}|g" \
-    -e "s|__SDDM_SESSION__|${SDDM_SESSION}|g" \
-    -e "s|__LIGHTDM_SESSION__|${LIGHTDM_SESSION}|g" \
-    -e "s|__PLYMOUTH_PACKAGE__|${PLYMOUTH_PACKAGE}|g" \
-    -e "s|__PLYMOUTH_THEME_PATH__|${PLYMOUTH_THEME_PATH}|g" \
-    -e "s|__HWE_KERNEL_PACKAGE__|${HWE_KERNEL_PACKAGE}|g" \
-    "$AUTOINSTALL_BASE" > "$AUTOINSTALL_RENDERED"
-
-cat > "$GRUBCFG_TMP" <<GRUBCFG
+cat > "$GRUBCFG_TMP" <<'GRUBCFG'
 set default=0
 set timeout=10
 
@@ -109,9 +87,9 @@ loadfont unicode
 set menu_color_normal=white/black
 set menu_color_highlight=black/light-gray
 
-menuentry "Automated $FLAVOR_LABEL Install" {
+menuentry "Automated Lubuntu Install" {
     set gfxpayload=keep
-    linux   /casper/vmlinuz autoinstall ds=nocloud\\;s=/cdrom/ fsck.mode=skip quiet splash ---
+    linux   /casper/vmlinuz autoinstall ds=nocloud\;s=/cdrom/ fsck.mode=skip quiet splash ---
     initrd  /casper/initrd
 }
 menuentry "Ubuntu Server Install (manual)" {
@@ -119,7 +97,7 @@ menuentry "Ubuntu Server Install (manual)" {
     linux   /casper/vmlinuz quiet ---
     initrd  /casper/initrd
 }
-if [ "\$grub_platform" = "efi" ]; then
+if [ "$grub_platform" = "efi" ]; then
 menuentry 'UEFI Firmware Settings' { fwsetup }
 fi
 GRUBCFG
@@ -138,8 +116,8 @@ echo "ISO pronta: $ISO_AUTO"
 echo "Creo e avvio la VM '$VM_NAME'..."
 virt-install \
     --name "$VM_NAME" \
-    --memory "$MEMORY" \
-    --vcpus "$VCPUS" \
+    --memory 4096 \
+    --vcpus 2 \
     --machine q35 \
     --cpu host-passthrough \
     --os-variant "$OS_VARIANT" \

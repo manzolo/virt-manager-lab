@@ -48,9 +48,6 @@ autoinstall:
     - bind9-dnsutils
     - aspell
     - aspell-it
-    - bpfcc-tools
-    - bpftrace
-    - python3-bpfcc
     - linux-generic-hwe-22.04
 
   late-commands:

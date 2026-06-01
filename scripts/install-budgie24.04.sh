@@ -3,9 +3,13 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-export FLAVOR_ID="budgie22"
-export FLAVOR_LABEL="Ubuntu Budgie 22.04"
-export VM_NAME="ubuntu-budgie22.04"
+export UBUNTU_VERSION="24.04"
+export UBUNTU_POINT_VERSION="24.04.4"
+export OS_VARIANT_CANDIDATE="ubuntu24.04"
+export OS_VARIANT_FALLBACK="ubuntu24.04"
+export FLAVOR_ID="budgie24"
+export FLAVOR_LABEL="Ubuntu Budgie 24.04"
+export VM_NAME="ubuntu-budgie24.04"
 export DESKTOP_PACKAGE="ubuntu-budgie-desktop"
 export DISPLAY_MANAGER="lightdm"
 export LIGHTDM_SESSION="ubuntu-budgie-desktop"

@@ -2,7 +2,7 @@
 # =============================================================================
 # Ubuntu 26.04 LTS — Autoinstall unattended
 # Target VM: ubuntu26.04
-# Replica: GNOME, bpfcc/bpftrace, openvpn, virtiofs shared, HWE kernel
+# Replica: GNOME, openvpn, virtiofs shared, HWE kernel
 # =============================================================================
 autoinstall:
   version: 1

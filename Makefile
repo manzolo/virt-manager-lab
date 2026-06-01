@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 Windows10 Windows11 Windows7U
+VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 lubuntu26.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 kubuntu24.04 xubuntu24.04 ubuntu-mate24.04 ubuntu-budgie24.04 kubuntu26.04 xubuntu26.04 ubuntu-mate26.04 ubuntu-budgie26.04 Windows10 Windows11 Windows7U
 
 SCRIPT_debian13 := scripts/install-debian13.sh
 SCRIPT_ubuntu24 := scripts/install-ubuntu24.04.sh
@@ -11,10 +11,19 @@ SCRIPT_ubuntu26 := scripts/install-ubuntu26.04.sh
 SCRIPT_lubuntu20 := scripts/install-lubuntu20.04.sh
 SCRIPT_lubuntu22 := scripts/install-lubuntu22.04.sh
 SCRIPT_lubuntu24 := scripts/install-lubuntu24.04.sh
+SCRIPT_lubuntu26 := scripts/install-lubuntu26.04.sh
 SCRIPT_kubuntu22 := scripts/install-kubuntu22.04.sh
 SCRIPT_xubuntu22 := scripts/install-xubuntu22.04.sh
 SCRIPT_mate22 := scripts/install-mate22.04.sh
 SCRIPT_budgie22 := scripts/install-budgie22.04.sh
+SCRIPT_kubuntu24 := scripts/install-kubuntu24.04.sh
+SCRIPT_xubuntu24 := scripts/install-xubuntu24.04.sh
+SCRIPT_mate24 := scripts/install-mate24.04.sh
+SCRIPT_budgie24 := scripts/install-budgie24.04.sh
+SCRIPT_kubuntu26 := scripts/install-kubuntu26.04.sh
+SCRIPT_xubuntu26 := scripts/install-xubuntu26.04.sh
+SCRIPT_mate26 := scripts/install-mate26.04.sh
+SCRIPT_budgie26 := scripts/install-budgie26.04.sh
 SCRIPT_win10 := scripts/win10/create_win10_vm.sh
 SCRIPT_win11 := scripts/win11/create_win11_vm.sh
 SCRIPT_win7u := scripts/win7u/create_win7u_vm.sh
@@ -25,10 +34,19 @@ VM_ubuntu26 := ubuntu26.04
 VM_lubuntu20 := lubuntu20.04
 VM_lubuntu22 := lubuntu22.04
 VM_lubuntu24 := lubuntu24.04
+VM_lubuntu26 := lubuntu26.04
 VM_kubuntu22 := kubuntu22.04
 VM_xubuntu22 := xubuntu22.04
 VM_mate22 := ubuntu-mate22.04
 VM_budgie22 := ubuntu-budgie22.04
+VM_kubuntu24 := kubuntu24.04
+VM_xubuntu24 := xubuntu24.04
+VM_mate24 := ubuntu-mate24.04
+VM_budgie24 := ubuntu-budgie24.04
+VM_kubuntu26 := kubuntu26.04
+VM_xubuntu26 := xubuntu26.04
+VM_mate26 := ubuntu-mate26.04
+VM_budgie26 := ubuntu-budgie26.04
 VM_win10 := Windows10
 VM_win11 := Windows11
 VM_win7u := Windows7U
@@ -38,31 +56,39 @@ WINDOWS_IDS := win10 win11 win7u
 .PHONY: help list status report
 help:
 	@printf '%s\n' \
-		'Gestione installazioni unattended' \
+		'virt-manager-lab - gestione VM unattended' \
 		'' \
-		'Target installazione:' \
-		'  make debian13 | ubuntu24 | ubuntu26 | lubuntu20 | lubuntu22 | lubuntu24 | kubuntu22 | xubuntu22 | mate22 | budgie22 | win10 | win11 | win7u' \
-		'  make install-<id>       Avvia lo script in modalita interattiva' \
-		'  make reinstall-<id>     Risponde S allo script se la VM esiste gia' \
-		'  make iso-<id>           Rigenera solo la ISO unattended (solo Windows)' \
-		'                          <id> e uno degli ID Makefile mostrati da make list' \
+		'USO RAPIDO' \
+		'  make list                 Mostra ID Makefile e nomi VM libvirt' \
+		'  make status               Stato libvirt + mappa ID Makefile' \
+		'  make <id>                 Installa/crea una VM, es. make win11' \
+		'  make reinstall-<id>       Reinstalla rispondendo S se la VM esiste' \
+		'  make start-<id>           Avvia una VM, es. make start-lubuntu24' \
+		'  make shutdown-<id>        Spegne ordinatamente una VM' \
 		'' \
-		'Target gestione VM:' \
-		'  make status             Mostra tutte le VM libvirt e la mappa ID Makefile' \
-		'                          La prima colonna e l ID numerico libvirt, valido solo mentre la VM gira' \
-		'  make status-<id>        Mostra stato della VM gestita, es. make status-win11' \
-		'  make start-<id>         Avvia la VM gestita, es. make start-win11' \
-		'  make shutdown-<id>      Spegne ordinatamente la VM gestita' \
-		'  make destroy-<id>       Spegne forzatamente la VM gestita' \
-		'  make undefine-<id>      Rimuove la definizione libvirt, non il disco' \
+		'PROFILI LINUX' \
+		'  Debian:      debian13' \
+		'  Ubuntu:      ubuntu24 ubuntu26' \
+		'  Lubuntu:     lubuntu20 lubuntu22 lubuntu24 lubuntu26' \
+		'  Kubuntu:     kubuntu22 kubuntu24 kubuntu26' \
+		'  Xubuntu:     xubuntu22 xubuntu24 xubuntu26' \
+		'  Ubuntu MATE: mate22 mate24 mate26' \
+		'  Budgie:      budgie22 budgie24 budgie26' \
 		'' \
-		'Nota:' \
-		'  make status-2 non e un target: 2 e l ID runtime di libvirt, non l ID Makefile.' \
-		'  Per interrogare quel numero usa direttamente: virsh dominfo 2' \
+		'PROFILI WINDOWS' \
+		'  win10 win11 win7u' \
+		'  make iso-win11            Rigenera solo la ISO unattended Windows' \
 		'' \
-		'Target utili:' \
-		'  make report             Rigenera vm-report.html' \
-		'  make list               Lista ID e nomi VM gestiti'
+		'GESTIONE VM' \
+		'  make status-<id>          Dettaglio libvirt della VM gestita' \
+		'  make destroy-<id>         Spegnimento forzato' \
+		'  make undefine-<id>        Rimuove definizione libvirt, non il disco' \
+		'  make report               Rigenera vm-report.html' \
+		'' \
+		'NOTE' \
+		'  <id> e uno degli ID mostrati da make list, es. win11 o xubuntu24.' \
+		'  L ID numerico di virsh, es. 2, vale solo mentre la VM e accesa.' \
+		'  make status-2 non esiste: usa virsh dominfo 2 se vuoi quel numero.'
 
 list:
 	@printf '%-10s %s\n' 'ID' 'VM'
@@ -72,10 +98,19 @@ list:
 	@printf '%-10s %s\n' 'lubuntu20' '$(VM_lubuntu20)'
 	@printf '%-10s %s\n' 'lubuntu22' '$(VM_lubuntu22)'
 	@printf '%-10s %s\n' 'lubuntu24' '$(VM_lubuntu24)'
+	@printf '%-10s %s\n' 'lubuntu26' '$(VM_lubuntu26)'
 	@printf '%-10s %s\n' 'kubuntu22' '$(VM_kubuntu22)'
 	@printf '%-10s %s\n' 'xubuntu22' '$(VM_xubuntu22)'
 	@printf '%-10s %s\n' 'mate22' '$(VM_mate22)'
 	@printf '%-10s %s\n' 'budgie22' '$(VM_budgie22)'
+	@printf '%-10s %s\n' 'kubuntu24' '$(VM_kubuntu24)'
+	@printf '%-10s %s\n' 'xubuntu24' '$(VM_xubuntu24)'
+	@printf '%-10s %s\n' 'mate24' '$(VM_mate24)'
+	@printf '%-10s %s\n' 'budgie24' '$(VM_budgie24)'
+	@printf '%-10s %s\n' 'kubuntu26' '$(VM_kubuntu26)'
+	@printf '%-10s %s\n' 'xubuntu26' '$(VM_xubuntu26)'
+	@printf '%-10s %s\n' 'mate26' '$(VM_mate26)'
+	@printf '%-10s %s\n' 'budgie26' '$(VM_budgie26)'
 	@printf '%-10s %s\n' 'win10' '$(VM_win10)'
 	@printf '%-10s %s\n' 'win11' '$(VM_win11)'
 	@printf '%-10s %s\n' 'win7u' '$(VM_win7u)'
@@ -91,10 +126,19 @@ status:
 		'lubuntu20:$(VM_lubuntu20)' \
 		'lubuntu22:$(VM_lubuntu22)' \
 		'lubuntu24:$(VM_lubuntu24)' \
+		'lubuntu26:$(VM_lubuntu26)' \
 		'kubuntu22:$(VM_kubuntu22)' \
 		'xubuntu22:$(VM_xubuntu22)' \
 		'mate22:$(VM_mate22)' \
 		'budgie22:$(VM_budgie22)' \
+		'kubuntu24:$(VM_kubuntu24)' \
+		'xubuntu24:$(VM_xubuntu24)' \
+		'mate24:$(VM_mate24)' \
+		'budgie24:$(VM_budgie24)' \
+		'kubuntu26:$(VM_kubuntu26)' \
+		'xubuntu26:$(VM_xubuntu26)' \
+		'mate26:$(VM_mate26)' \
+		'budgie26:$(VM_budgie26)' \
 		'win10:$(VM_win10)' \
 		'win11:$(VM_win11)' \
 		'win7u:$(VM_win7u)'; do \
@@ -151,10 +195,19 @@ $(eval $(call INSTALL_TARGETS,ubuntu26))
 $(eval $(call INSTALL_TARGETS,lubuntu20))
 $(eval $(call INSTALL_TARGETS,lubuntu22))
 $(eval $(call INSTALL_TARGETS,lubuntu24))
+$(eval $(call INSTALL_TARGETS,lubuntu26))
 $(eval $(call INSTALL_TARGETS,kubuntu22))
 $(eval $(call INSTALL_TARGETS,xubuntu22))
 $(eval $(call INSTALL_TARGETS,mate22))
 $(eval $(call INSTALL_TARGETS,budgie22))
+$(eval $(call INSTALL_TARGETS,kubuntu24))
+$(eval $(call INSTALL_TARGETS,xubuntu24))
+$(eval $(call INSTALL_TARGETS,mate24))
+$(eval $(call INSTALL_TARGETS,budgie24))
+$(eval $(call INSTALL_TARGETS,kubuntu26))
+$(eval $(call INSTALL_TARGETS,xubuntu26))
+$(eval $(call INSTALL_TARGETS,mate26))
+$(eval $(call INSTALL_TARGETS,budgie26))
 $(eval $(call INSTALL_TARGETS,win10))
 $(eval $(call INSTALL_TARGETS,win11))
 $(eval $(call INSTALL_TARGETS,win7u))

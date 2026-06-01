@@ -241,6 +241,7 @@ for item in "${TEST_ITEMS[@]}"; do
   IFS='|' read -r id vm script <<<"$item"
   run_one "$id" "$vm" "$script" &
   pids+=($!)
+  sleep 8   # sfasa i lanci: evita burst di probe os-variant / xorriso concorrenti
   # throttle: conta SOLO i run_one ancora vivi (non il refresher)
   while :; do
     alive=0

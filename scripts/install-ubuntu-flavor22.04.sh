@@ -53,10 +53,15 @@ FIRSTBOOT_POLL_INTERVAL="${FIRSTBOOT_POLL_INTERVAL:-30}"
 OS_VARIANT=""
 for candidate in "$OS_VARIANT_CANDIDATE" "$OS_VARIANT_FALLBACK" "$OS_VARIANT_FALLBACK2"; do
     [[ -n "$candidate" ]] || continue
-    if virt-install --os-variant "$candidate" --print-xml &>/dev/null; then
-        OS_VARIANT="$candidate"
-        break
-    fi
+    # Il probe --print-xml puo' fallire transitoriamente quando piu' install
+    # girano in parallelo (es. make test-all): riprova prima di scartarlo.
+    for _try in 1 2 3 4 5 6; do
+        if virt-install --os-variant "$candidate" --print-xml &>/dev/null; then
+            OS_VARIANT="$candidate"
+            break 2
+        fi
+        sleep 2
+    done
 done
 
 if [[ -z "$OS_VARIANT" ]]; then

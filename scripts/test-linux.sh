@@ -17,7 +17,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_DIR"
-source "$SCRIPT_DIR/test-linux.env"
+source "${TEST_ENV_FILE:-$SCRIPT_DIR/test-linux.env}"
 [ -n "${1:-}" ] && TEST_PARALLEL="$1"
 
 # Mappa la config Linux nelle variabili attese dal motore (scripts/test-lib.sh).

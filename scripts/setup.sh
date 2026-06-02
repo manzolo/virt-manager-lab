@@ -17,7 +17,7 @@ e(){ printf '  \033[31m!!\033[0m   %s\n' "$1"; FAIL=1; }         # problema
 echo "== 1. Pacchetti =="
 declare -A PKG=(
   [qemu-system-x86]=qemu-system-x86_64 [qemu-utils]=qemu-img [virtinst]=virt-install
-  [libvirt-daemon-system]="" [libvirt-clients]=virsh [xorriso]=xorriso [wget]=wget
+  [virt-viewer]=remote-viewer [libvirt-daemon-system]="" [libvirt-clients]=virsh [xorriso]=xorriso [wget]=wget
   [libguestfs-tools]=virt-customize [imagemagick]=convert [python3]=python3 [ovmf]=""
 )
 missing=()

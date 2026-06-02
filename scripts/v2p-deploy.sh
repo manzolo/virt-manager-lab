@@ -40,9 +40,78 @@ c_red=$'\e[31m'; c_grn=$'\e[32m'; c_yel=$'\e[33m'; c_bold=$'\e[1m'; c_off=$'\e[0
 die() { echo "${c_red}Errore:${c_off} $*" >&2; exit 1; }
 hr() { printf '%s\n' "----------------------------------------------------------------"; }
 
-for cmd in virsh qemu-img lsblk findmnt blockdev; do
+for cmd in virsh qemu-img lsblk findmnt blockdev wipefs; do
   command -v "$cmd" >/dev/null || die "comando mancante: $cmd"
 done
+
+part_path() {
+  local disk="$1" part="$2"
+  if [[ "$disk" =~ [0-9]$ ]]; then
+    printf '%sp%s\n' "$disk" "$part"
+  else
+    printf '%s%s\n' "$disk" "$part"
+  fi
+}
+
+disk_field() {
+  local disk="$1" field="$2"
+  lsblk -dno "$field" "$disk" 2>/dev/null | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+disk_label() {
+  local disk="$1" size tran model serial
+  size="$(disk_field "$disk" SIZE)"
+  tran="$(disk_field "$disk" TRAN)"
+  model="$(disk_field "$disk" MODEL)"
+  serial="$(disk_field "$disk" SERIAL)"
+
+  printf '%-12s %7s %-4s %-32s %s\n' "$disk" "${size:--}" "${tran:--}" "${model:--}" "${serial:--}"
+}
+
+repair_gpt() {
+  local disk="$1"
+  command -v sgdisk >/dev/null || {
+    echo "[!] sgdisk non trovato: salto la correzione della GPT di backup."
+    return 0
+  }
+  echo "[*] Sposto la GPT di backup a fine disco, se necessario..."
+  sgdisk -e "$disk" >/dev/null 2>&1 || true
+}
+
+install_efi_fallback() {
+  local disk="$1" esp="" mnt="" loader=""
+
+  esp="$(lsblk -rpn -o NAME,FSTYPE,PARTTYPE "$disk" 2>/dev/null \
+    | awk 'tolower($2)=="vfat" && tolower($3)=="c12a7328-f81f-11d2-ba4b-00a0c93ec93b"{print $1; exit}')"
+  [[ -n "$esp" ]] || esp="$(part_path "$disk" 1)"
+  [[ -b "$esp" ]] || return 0
+
+  mnt="$(mktemp -d /tmp/v2p-efi.XXXXXX)"
+  if ! mount "$esp" "$mnt" 2>/dev/null; then
+    rmdir "$mnt"
+    echo "[!] Non riesco a montare la ESP ($esp): salto fallback EFI."
+    return 0
+  fi
+
+  if [[ ! -f "$mnt/EFI/BOOT/BOOTX64.EFI" ]]; then
+    for loader in \
+      "$mnt/EFI/GRUB/grubx64.efi" \
+      "$mnt/EFI/GRUB/BOOTX64.EFI" \
+      "$mnt/EFI/ubuntu/shimx64.efi" \
+      "$mnt/EFI/ubuntu/grubx64.efi"
+    do
+      if [[ -f "$loader" ]]; then
+        echo "[*] Creo fallback EFI: EFI/BOOT/BOOTX64.EFI"
+        mkdir -p "$mnt/EFI/BOOT"
+        cp "$loader" "$mnt/EFI/BOOT/BOOTX64.EFI"
+        break
+      fi
+    done
+  fi
+
+  umount "$mnt" || true
+  rmdir "$mnt" || true
+}
 
 # ---- 1. Selezione VM ----
 mapfile -t VMS < <(virsh list --all --name 2>/dev/null | sed '/^$/d')
@@ -87,14 +156,22 @@ SYS_DISK="/dev/${sys_pk}"
 # ---- 4. Elenco dischi fisici candidati ----
 echo "${c_bold}Dischi fisici rilevati${c_off} (disco di sistema escluso: ${c_yel}${SYS_DISK}${c_off}):"
 echo
-lsblk -dpno NAME,SIZE,TYPE,TRAN,MODEL | awk '$3=="disk"'
+mapfile -t ALL_DISKS < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}')
+for disk in "${ALL_DISKS[@]}"; do
+  disk_label "$disk"
+done
 echo
-mapfile -t DISKS < <(lsblk -dpno NAME,TYPE | awk '$2=="disk"{print $1}' | grep -vxF "$SYS_DISK")
+mapfile -t DISKS < <(printf '%s\n' "${ALL_DISKS[@]}" | grep -vxF "$SYS_DISK")
 [[ ${#DISKS[@]} -gt 0 ]] || die "nessun disco fisico di destinazione disponibile (oltre al sistema)."
 
 echo "${c_bold}Scegli il disco di DESTINAZIONE${c_off} (verra' ${c_red}AZZERATO${c_off}):"
 TARGET=""
-select d in "${DISKS[@]}"; do [[ -n "${d:-}" ]] && { TARGET="$d"; break; }; done
+mapfile -t DISK_CHOICES < <(for disk in "${DISKS[@]}"; do disk_label "$disk"; done)
+select d in "${DISK_CHOICES[@]}"; do
+  [[ -n "${d:-}" ]] || continue
+  TARGET="${DISKS[$((REPLY - 1))]}"
+  break
+done
 [[ -b "$TARGET" ]] || die "device non valido: $TARGET"
 
 # ---- 5. Controlli di sicurezza sul target ----
@@ -119,7 +196,8 @@ echo "  VM            : $VM"
 echo "  Immagine      : $SRC"
 echo "  Dimensione    : $(numfmt --to=iec "${VSIZE_BYTES:-0}" 2>/dev/null) (virtuale)"
 echo "  ${c_red}Destinazione  : $TARGET  ($TSIZE_H)  <-- verra' AZZERATO${c_off}"
-lsblk -po NAME,SIZE,FSTYPE,LABEL,MODEL "$TARGET"
+echo "  Seriale       : $(disk_field "$TARGET" SERIAL)"
+lsblk -po NAME,SIZE,FSTYPE,LABEL,MODEL,SERIAL "$TARGET"
 hr
 
 # ---- 6. Dry-run: stop qui ----
@@ -143,6 +221,10 @@ echo "[*] Scrivo l'immagine (puo' richiedere parecchio tempo)..."
 qemu-img convert -p -O raw -t none -W "$SRC" "$TARGET" || die "qemu-img convert fallito."
 sync
 command -v partprobe >/dev/null && partprobe "$TARGET" 2>/dev/null || true
+repair_gpt "$TARGET"
+command -v partprobe >/dev/null && partprobe "$TARGET" 2>/dev/null || true
+install_efi_fallback "$TARGET"
+sync
 
 echo
 echo "${c_grn}[+] Fatto.${c_off} Immagine di '$VM' scritta su $TARGET."

@@ -79,6 +79,7 @@ echo 'file:///mnt/shared Shared' > /home/$USERNAME/.config/gtk-3.0/bookmarks
 chown "$USERNAME:$USERNAME" /home/$USERNAME/.config/gtk-3.0/bookmarks
 systemctl enable NetworkManager qemu-guest-agent
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+grub-install --target=x86_64-efi --efi-directory=/boot --removable
 if [ "$PROFILE" = "niri" ]; then
   grep -q simpledrm_platform_driver_init /etc/default/grub || \
     sed -i 's#^GRUB_CMDLINE_LINUX_DEFAULT="#GRUB_CMDLINE_LINUX_DEFAULT="initcall_blacklist=simpledrm_platform_driver_init #' /etc/default/grub

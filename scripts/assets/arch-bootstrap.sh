@@ -95,6 +95,11 @@ if [ "$PROFILE" = "gnome" ]; then
     > /mnt/etc/gdm/custom.conf
 elif [ "$PROFILE" = "niri" ]; then
   arch-chroot /mnt systemctl enable sddm
+  install -d -m0755 /mnt/etc/systemd/system/sddm.service.d
+  cat > /mnt/etc/systemd/system/sddm.service.d/wait-firstboot.conf <<'EOF'
+[Unit]
+After=niri-firstboot.service
+EOF
   install -d -m0755 /mnt/etc/sddm.conf.d
   # il pacchetto niri fornisce /usr/share/wayland-sessions/niri.desktop
   printf '[Autologin]\nUser=%s\nSession=niri\n' "$USERNAME" \

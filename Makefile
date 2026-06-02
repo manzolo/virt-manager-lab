@@ -53,7 +53,7 @@ VM_win7u := Windows7U
 
 WINDOWS_IDS := win10 win11 win7u
 
-.PHONY: help list status report cheatsheet test-all test-linux test-win setup setup-check
+.PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check
 help:
 	@printf '%s\n' \
 		'virt-manager-lab - gestione VM unattended' \
@@ -89,6 +89,7 @@ help:
 		'  make all                  Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
 		'  make report               Rigenera vm-report.html' \
 		'  make cheatsheet           Rigenera docs/virsh-cheatsheet.pdf' \
+		'  make v2p [VM=nome]        Scrive il disco di una VM su un disco FISICO (V2P, distruttivo)' \
 		'  make test-all [PAR=N]     Test e2e Linux + Windows, report unico (reinstall+verifica)' \
 		'  make test-linux [PAR=N]   Test e2e delle sole VM Linux' \
 		'  make test-win [PAR=N]     Test e2e delle sole VM Windows' \
@@ -171,6 +172,12 @@ report:
 # Rigenera il PDF del cheat sheet virsh da docs/virsh-cheatsheet.html (Chrome headless).
 cheatsheet:
 	bash scripts/gen-cheatsheet.sh
+
+# Scrive il disco di una VM su un disco FISICO reale (virtual->physical). DISTRUTTIVO:
+# selezione guidata + conferme. Anteprima senza scrivere: make v2p V2P_DRYRUN=1
+# Es.: make v2p VM=ubuntu26.04
+v2p:
+	bash scripts/v2p-deploy.sh $(VM)
 
 # Test end-to-end completo (Linux + Windows) con un UNICO report HTML.
 # Parallelismo: make test-all PAR=3  (default 2, perche' include le Windows).

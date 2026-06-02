@@ -53,7 +53,7 @@ VM_win7u := Windows7U
 
 WINDOWS_IDS := win10 win11 win7u
 
-.PHONY: help list status report test-all setup setup-check
+.PHONY: help list status report cheatsheet test-all test-linux test-win setup setup-check
 help:
 	@printf '%s\n' \
 		'virt-manager-lab - gestione VM unattended' \
@@ -88,7 +88,10 @@ help:
 		'  make clean-<id>           Rimuove VM + suo disco qcow2 (non ISO/altri dischi)' \
 		'  make all                  Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
 		'  make report               Rigenera vm-report.html' \
-		'  make test-all [PAR=N]     Test e2e di tutte le VM (reinstall+verifica+report HTML)' \
+		'  make cheatsheet           Rigenera docs/virsh-cheatsheet.pdf' \
+		'  make test-all [PAR=N]     Test e2e Linux + Windows, report unico (reinstall+verifica)' \
+		'  make test-linux [PAR=N]   Test e2e delle sole VM Linux' \
+		'  make test-win [PAR=N]     Test e2e delle sole VM Windows' \
 		'' \
 		'NOTE' \
 		'  <id> e uno degli ID mostrati da make list, es. win11 o xubuntu24.' \
@@ -165,10 +168,25 @@ setup-check:
 report:
 	bash scripts/vm-report.sh vm-report.html
 
-# Test end-to-end di tutte le VM in test-all.env (reinstall + verifica + report HTML).
-# Parallelismo: make test-all PAR=6  (default 4). REINSTALLA le VM elencate.
+# Rigenera il PDF del cheat sheet virsh da docs/virsh-cheatsheet.html (Chrome headless).
+cheatsheet:
+	bash scripts/gen-cheatsheet.sh
+
+# Test end-to-end completo (Linux + Windows) con un UNICO report HTML.
+# Parallelismo: make test-all PAR=3  (default 2, perche' include le Windows).
+# REINSTALLA tutte le VM elencate in test-linux.env e test-win.env.
 test-all:
 	bash scripts/test-all.sh $(PAR)
+
+# Test end-to-end delle VM Linux in test-linux.env (reinstall + verifica + report HTML).
+# Parallelismo: make test-linux PAR=6  (default 4). REINSTALLA le VM elencate.
+test-linux:
+	bash scripts/test-linux.sh $(PAR)
+
+# Test end-to-end delle VM Windows in test-win.env (reinstall + verifica + report HTML).
+# Parallelismo: make test-win PAR=1  (default 2). REINSTALLA le VM elencate.
+test-win:
+	bash scripts/test-win.sh $(PAR)
 
 define INSTALL_TARGETS
 .PHONY: $(1) install-$(1) reinstall-$(1) iso-$(1) status-$(1) start-$(1) shutdown-$(1) destroy-$(1) undefine-$(1) clean-$(1)

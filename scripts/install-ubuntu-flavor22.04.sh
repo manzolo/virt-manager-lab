@@ -54,7 +54,7 @@ OS_VARIANT=""
 for candidate in "$OS_VARIANT_CANDIDATE" "$OS_VARIANT_FALLBACK" "$OS_VARIANT_FALLBACK2"; do
     [[ -n "$candidate" ]] || continue
     # Il probe --print-xml puo' fallire transitoriamente quando piu' install
-    # girano in parallelo (es. make test-all): riprova prima di scartarlo.
+    # girano in parallelo (es. make test-linux): riprova prima di scartarlo.
     for _try in 1 2 3 4 5 6; do
         if virt-install --os-variant "$candidate" --print-xml &>/dev/null; then
             OS_VARIANT="$candidate"

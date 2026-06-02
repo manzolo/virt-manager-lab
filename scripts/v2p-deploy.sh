@@ -33,7 +33,7 @@ done
 # ---- auto-elevazione (serve root per scrivere sul device) ----
 if [[ $EUID -ne 0 ]]; then
   echo "[*] Servono privilegi di root: rilancio con sudo..."
-  exec sudo -E V2P_DRYRUN="$DRYRUN" bash "$0" ${VM:+"$VM"}
+  exec sudo V2P_DRYRUN="$DRYRUN" bash "$0" ${VM:+"$VM"}
 fi
 
 c_red=$'\e[31m'; c_grn=$'\e[32m'; c_yel=$'\e[33m'; c_bold=$'\e[1m'; c_off=$'\e[0m'
@@ -54,7 +54,7 @@ if [[ -z "$VM" ]]; then
 fi
 printf '%s\n' "${VMS[@]}" | grep -qxF "$VM" || die "VM '$VM' non trovata."
 
-state="$(virsh domstate "$VM" 2>/dev/null | head -n1)"
+state="$(LC_ALL=C virsh domstate "$VM" 2>/dev/null | head -n1)"
 [[ "$state" == "shut off" ]] || die "la VM '$VM' e' '$state': spegnila prima (virsh shutdown $VM)."
 
 # ---- 2. Disco sorgente della VM ----

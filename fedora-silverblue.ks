@@ -34,6 +34,12 @@ EOF
 install -d -m0755 /mnt/shared
 echo 'shared /mnt/shared virtiofs defaults,nofail 0 0' >> /etc/fstab
 
+# --- segnalibro "Shared" -> /mnt/shared nel file manager dell'utente ---
+# (su ostree /home -> /var/home; la home dell'utente esiste gia' in %post)
+install -d -o __VM_USER__ -g __VM_USER__ /home/__VM_USER__/.config /home/__VM_USER__/.config/gtk-3.0
+echo 'file:///mnt/shared Shared' > /home/__VM_USER__/.config/gtk-3.0/bookmarks
+chown __VM_USER__:__VM_USER__ /home/__VM_USER__/.config/gtk-3.0/bookmarks
+
 # --- target grafico + display-manager ---
 systemctl set-default graphical.target
 systemctl enable gdm.service

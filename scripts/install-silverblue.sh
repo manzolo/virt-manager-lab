@@ -19,14 +19,17 @@ STORAGE="$VM_BASE_DIR/storage"
 REPO_DIR="$VM_BASE_DIR/virt-manager"
 
 VM_NAME="silverblue"
+FIRSTBOOT_AUTOSTART="${FIRSTBOOT_AUTOSTART:-true}"
+FIRSTBOOT_WAIT_TIMEOUT="${FIRSTBOOT_WAIT_TIMEOUT:-5400}"
 DISK_PATH="$STORAGE/hd/silverblue.qcow2"
 DISK_SIZE="40G"
-FED_VER="${FED_VER:-41}"
+FED_VER="${FED_VER:-44}"
+FED_BUILD="${FED_BUILD:-1.7}"
 ISO_ORIG="$STORAGE/Iso/Distro/Fedora-Silverblue-ostree-x86_64-${FED_VER}.iso"
 ISO_OEMDRV="$STORAGE/Iso/Distro/silverblue-oemdrv-ks.iso"
 KS_TEMPLATE="$REPO_DIR/fedora-silverblue.ks"
 SHARED_DIR="$STORAGE/shared"
-ISO_URL="https://download.fedoraproject.org/pub/fedora/linux/releases/${FED_VER}/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-${FED_VER}-1.4.iso"
+ISO_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/${FED_VER}/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-${FED_VER}-${FED_BUILD}.iso"
 
 # --------------------------------------------------------------------------
 # 1. ISO originale
@@ -104,8 +107,8 @@ virt-install \
     --cpu host-passthrough \
     --os-variant "fedora-rawhide" \
     --disk "$DISK_PATH",bus=virtio,driver.discard=unmap \
-    --disk "$ISO_ORIG",device=cdrom \
     --disk "$ISO_OEMDRV",device=cdrom \
+    --cdrom "$ISO_ORIG" \
     --network network=default,model=virtio \
     --graphics spice \
     --video virtio \
@@ -118,7 +121,24 @@ virt-install \
     --noautoconsole \
     --noreboot
 
+if [ "$FIRSTBOOT_AUTOSTART" = "true" ]; then
+    echo "Attendo lo spegnimento di fine installazione per avviare il primo boot..."
+    deadline=$((SECONDS + FIRSTBOOT_WAIT_TIMEOUT))
+    while [ "$(virsh domstate "$VM_NAME" 2>/dev/null || true)" != "shut off" ]; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+            echo "Timeout: installazione non terminata entro ${FIRSTBOOT_WAIT_TIMEOUT}s."
+            exit 1
+        fi
+        sleep 10
+    done
+    virsh start "$VM_NAME" >/dev/null
+fi
+
 echo ""
 echo "[+] Installazione avviata. Seguila con: virt-viewer $VM_NAME"
 echo "    Al termine la VM si spegne (--noreboot)."
-echo "    Primo boot: 'virsh start $VM_NAME' (layer qemu-guest-agent + 1 reboot)."
+if [ "$FIRSTBOOT_AUTOSTART" = "true" ]; then
+    echo "    Primo boot gia' avviato automaticamente (layer qemu-guest-agent + 1 reboot)."
+else
+    echo "    Primo boot: 'virsh start $VM_NAME' (layer qemu-guest-agent + 1 reboot)."
+fi

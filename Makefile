@@ -82,7 +82,7 @@ help:
 		'  Xubuntu:     xubuntu22 xubuntu24 xubuntu26' \
 		'  Ubuntu MATE: mate22 mate24 mate26' \
 		'  Budgie:      budgie22 budgie24 budgie26' \
-		'  Altri:       silverblue (Fedora immutabile) · arch · niri  [first-draft]' \
+		'  Altri:       silverblue (Fedora immutabile) · arch · niri' \
 		'' \
 		'PROFILI WINDOWS' \
 		'  win10 win11 win7u' \

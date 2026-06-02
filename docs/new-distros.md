@@ -21,6 +21,9 @@ e il mount virtiofs su `/mnt/shared`.
   una ISO minuscola `OEMDRV` con `ks.cfg` e la si attacca come secondo cdrom. L'ISO
   Fedora originale resta intatta.
 - **Display-manager**: `gdm` (presente di base) + autologin in `%post`.
+- **TODO (dopo)**: il menu GRUB della ISO Fedora ha timeout ~60s prima di avviare
+  l'install → abbassarlo a ~5s (richiede remaster del `grub.cfg` della ISO, oppure
+  override del timeout via boot). Richiesta utente, da fare a validazione conclusa.
 - **Punti da validare al primo run**:
   - riga `ostreesetup`/`ostreecontainer` **version-specific** (ref `fedora/<VER>/x86_64/silverblue`).
     Il template usa `FED_VER` (default 41) — verificare che combaci con la ISO scaricata.

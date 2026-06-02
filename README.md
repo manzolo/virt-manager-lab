@@ -105,7 +105,12 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `silverblue`, `arch`, `niri`, `win10`, `win11`, `win7u`.
+
+I profili `silverblue` (Fedora Silverblue immutabile, kickstart), `arch` (Arch Linux,
+GNOME) e `niri` (Arch + compositor Wayland niri + shell noctalia) sono installer più
+recenti: vedi [vms/silverblue.md](vms/silverblue.md), [vms/arch.md](vms/arch.md),
+[vms/niri.md](vms/niri.md) e [docs/new-distros.md](docs/new-distros.md).
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:
@@ -361,6 +366,9 @@ La cartella `vms/` contiene un file markdown per ogni VM con hardware, pacchetti
 | xubuntu26.04 | Xubuntu 26.04 LTS | Xfce, desktop installato al primo boot |
 | ubuntu-mate26.04 | Ubuntu MATE 26.04 LTS | MATE, desktop installato al primo boot |
 | ubuntu-budgie26.04 | Ubuntu Budgie 26.04 LTS | Budgie, desktop installato al primo boot |
+| silverblue | Fedora Silverblue 44 | GNOME immutabile (ostree), kickstart via OEMDRV |
+| arch | Arch Linux | GNOME + GDM, install via archiso `script=` |
+| niri | Arch + niri | compositor Wayland niri + shell noctalia (AUR), SDDM autologin |
 | Debian13 | Debian 13 | GNOME, Apache2, Docker CE |
 | Windows10 | Windows 10 | autounattend, virtiofs, full virtio, Firefox, Notepad++ |
 | Windows11 | Windows 11 | autounattend, KMS generico |
@@ -390,6 +398,59 @@ Il report include:
 - Totali aggregati in cima
 - Filtri per stato e OS + casella di ricerca per nome
 - Ordinamento per colonna (click sull'intestazione)
+
+---
+
+## Test end-to-end (e2e)
+
+Reinstalla le VM da zero, verifica che arrivino al desktop e produce un report HTML
+con PASS/WARN/FAIL e screenshot di ognuna.
+
+```bash
+make test-all       # Linux + Windows, report unico (default PAR=2)
+make test-linux     # solo VM Linux (default PAR=4)
+make test-win       # solo VM Windows (default PAR=2)
+```
+
+- **Linux**: install → spegnimento → avvio → `qemu-guest-agent` verifica
+  `graphical.target` + display-manager attivo → screenshot.
+- **Windows**: install → attesa del guest-agent (OOBE/autologon + virtio-win-guest-tools)
+  → verifica via `cmd.exe` → screenshot. Windows 7 (senza canale agent) è screenshot-only.
+- Motore condiviso: `scripts/test-lib.sh`; configurazione in `scripts/test-linux.env` e
+  `scripts/test-win.env` (liste VM, parallelismo, timeout). Il report si auto-aggiorna ogni 15s.
+
+> Le VM con contratto non uniforme (es. Silverblue per via di SELinux sul guest-exec, e
+> niri sperimentale) restano in `TEST_EXCLUDED_ITEMS`.
+
+---
+
+## Deploy su disco fisico — Virtual-to-Physical (V2P)
+
+Scrive il disco di una VM (qcow2) su un **disco fisico reale**, per portare su hardware
+una VM provata nel lab (es. niri+noctalia su `/dev/sda`).
+
+```bash
+make v2p VM=niri                 # selezione guidata del disco di destinazione
+V2P_DRYRUN=1 bash scripts/v2p-deploy.sh niri   # anteprima, non scrive nulla
+```
+
+Operazione **distruttiva** (azzera il disco scelto) con salvaguardie: VM dev'essere
+spenta, esclude il disco di sistema e i device con partizioni montate, richiede di
+digitare il device + `CONFERMO`. Usa `qemu-img convert -O raw`. Le VM del lab bootano
+in **UEFI**: avviare la macchina fisica in modalità UEFI.
+
+---
+
+## Cheat sheet virsh
+
+Bignami a colori dei comandi `virsh` più usati del lab (avvio/stop, screenshot,
+guest-agent, dischi/pool, snapshot, diagnostica, eliminazione sicura, virtiofs).
+
+```bash
+make cheatsheet     # rigenera docs/virsh-cheatsheet.pdf da docs/virsh-cheatsheet.html
+```
+
+Sorgente: [docs/virsh-cheatsheet.html](docs/virsh-cheatsheet.html) · PDF: `docs/virsh-cheatsheet.pdf`.
 
 ---
 

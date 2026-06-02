@@ -55,22 +55,50 @@ virt-manager-lab/
 
 ---
 
+## Avvio rapido
+
+```bash
+# 1. Clona il repo nel percorso atteso dagli script
+git clone https://github.com/manzolo/virt-manager-lab.git \
+  ~/Workspaces/qemu/virt-manager
+
+# 2. Installa dipendenze e crea pool/rete libvirt (idempotente)
+cd ~/Workspaces/qemu/virt-manager
+make setup
+
+# 3. Verifica l'ambiente
+make setup-check
+
+# 4. Installa una VM (es. Lubuntu 24.04)
+make lubuntu24
+```
+
+> **Percorso clone**: gli script usano `VM_BASE_DIR` definito in `scripts/lab.env`
+> (default `~/Workspaces/qemu`, il repo deve stare in `$VM_BASE_DIR/virt-manager`).
+> Per usare un percorso diverso modifica `VM_BASE_DIR` in `scripts/lab.env`
+> **prima** di eseguire qualsiasi script.
+
+---
+
 ## Requisiti host
 
 - Linux con KVM abilitato (`/dev/kvm` accessibile)
 - `libvirt` + `libvirtd` in esecuzione
 - `virt-install` (pacchetto `virtinst`)
+- `virtiofsd` — richiesto per la cartella condivisa virtiofs nelle VM Linux
 - `qemu-img`
 - `xorriso` — necessario per costruire le ISO con autoinstall integrato
 - `wget` — per scaricare le ISO se mancanti
 - Pool libvirt `hdd` che punta alla cartella dove vuoi salvare i dischi
+
+`make setup` installa automaticamente tutte le dipendenze sopra.
 
 ### Verifica rapida
 
 ```bash
 kvm-ok                        # oppure: grep -c vmx /proc/cpuinfo
 virsh pool-list --all         # deve comparire il pool "hdd"
-which xorriso virt-install qemu-img
+which xorriso virt-install qemu-img virtiofsd
 ```
 
 ---

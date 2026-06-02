@@ -18,7 +18,7 @@ echo "== 1. Pacchetti =="
 declare -A PKG=(
   [qemu-system-x86]=qemu-system-x86_64 [qemu-utils]=qemu-img [virtinst]=virt-install
   [virt-viewer]=remote-viewer [libvirt-daemon-system]="" [libvirt-clients]=virsh [xorriso]=xorriso [wget]=wget
-  [libguestfs-tools]=virt-customize [imagemagick]=convert [python3]=python3 [ovmf]=""
+  [libguestfs-tools]=virt-customize [imagemagick]=convert [python3]=python3 [ovmf]="" [virtiofsd]=""
 )
 missing=()
 for pkg in "${!PKG[@]}"; do

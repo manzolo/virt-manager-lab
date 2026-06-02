@@ -118,6 +118,7 @@ virt-install \
     --controller type=scsi,model=virtio-scsi \
     --rng /dev/urandom,model=virtio \
     --memballoon model=virtio \
+    --events on_reboot=restart \
     --noautoconsole \
     --noreboot
 

@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<!DOCTYPE profile>
+<profile xmlns="http://www.suse.com/1.0/yast2ns"
+         xmlns:config="http://www.suse.com/1.0/configns">
+  <general>
+    <mode>
+      <confirm config:type="boolean">false</confirm>
+      <final_reboot config:type="boolean">false</final_reboot>
+    </mode>
+  </general>
+  <keyboard>
+    <keymap>italian</keymap>
+  </keyboard>
+  <language>
+    <language>it_IT</language>
+    <languages>it_IT,en_US</languages>
+  </language>
+  <timezone>
+    <hwclock>UTC</hwclock>
+    <timezone>Europe/Rome</timezone>
+  </timezone>
+  <report>
+    <errors>
+      <log config:type="boolean">true</log>
+      <show config:type="boolean">false</show>
+      <timeout config:type="integer">0</timeout>
+    </errors>
+    <warnings>
+      <log config:type="boolean">true</log>
+      <show config:type="boolean">false</show>
+      <timeout config:type="integer">0</timeout>
+    </warnings>
+    <messages>
+      <log config:type="boolean">true</log>
+      <show config:type="boolean">false</show>
+      <timeout config:type="integer">0</timeout>
+    </messages>
+    <yesno_messages>
+      <log config:type="boolean">true</log>
+      <show config:type="boolean">false</show>
+      <timeout config:type="integer">0</timeout>
+    </yesno_messages>
+  </report>
+  <users config:type="list">
+    <user>
+      <username>root</username>
+      <encrypted config:type="boolean">true</encrypted>
+      <user_password>__VM_PASS_HASH__</user_password>
+    </user>
+  </users>
+  <login_settings>
+    <autologin_user>__VM_USER__</autologin_user>
+    <password_less_login config:type="boolean">false</password_less_login>
+  </login_settings>
+  <partitioning config:type="list">
+    <drive>
+      <device>/dev/vda</device>
+      <disklabel>gpt</disklabel>
+      <initialize config:type="boolean">true</initialize>
+      <use>all</use>
+      <partitions config:type="list">
+        <partition>
+          <create config:type="boolean">true</create>
+          <filesystem config:type="symbol">vfat</filesystem>
+          <format config:type="boolean">true</format>
+          <mount>/boot/efi</mount>
+          <partition_id config:type="integer">259</partition_id>
+          <size>512M</size>
+        </partition>
+        <partition>
+          <create config:type="boolean">true</create>
+          <filesystem config:type="symbol">btrfs</filesystem>
+          <format config:type="boolean">true</format>
+          <mount>/</mount>
+          <partition_id config:type="integer">131</partition_id>
+          <size>max</size>
+        </partition>
+      </partitions>
+    </drive>
+  </partitioning>
+  <bootloader>
+    <loader_type>grub2-efi</loader_type>
+  </bootloader>
+  <scripts>
+    <chroot-scripts config:type="list">
+      <script>
+        <filename>lab-post.sh</filename>
+        <interpreter>shell</interpreter>
+        <chrooted config:type="boolean">true</chrooted>
+        <feedback config:type="boolean">false</feedback>
+        <source><![CDATA[
+getent group users >/dev/null || groupadd -g 100 users
+id __VM_USER__ >/dev/null 2>&1 || useradd -m -u 1000 -g users -G wheel -c "__VM_REALNAME__" -s /bin/bash __VM_USER__
+usermod -p '__VM_PASS_HASH__' __VM_USER__
+echo tumbleweed-lab > /etc/hostname
+install -d -m0755 /etc/sudoers.d
+printf '%s\n' '__VM_USER__ ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/__VM_USER__
+chmod 0440 /etc/sudoers.d/__VM_USER__
+install -d -m0755 /etc/systemd/system/default.target.wants /etc/systemd/system/multi-user.target.wants /etc/systemd/system/graphical.target.wants
+ln -snf /usr/lib/systemd/system/graphical.target /etc/systemd/system/default.target
+ln -snf /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/default.target.wants/NetworkManager.service
+ln -snf /usr/lib/systemd/system/NetworkManager.service /etc/systemd/system/multi-user.target.wants/NetworkManager.service
+ln -snf /usr/lib/systemd/system/qemu-guest-agent.service /etc/systemd/system/multi-user.target.wants/qemu-guest-agent.service
+ln -snf /usr/lib/systemd/system/display-manager.service /etc/systemd/system/graphical.target.wants/display-manager.service 2>/dev/null || true
+install -d -m0700 /etc/NetworkManager/system-connections
+cat > /etc/NetworkManager/system-connections/lab-dhcp.nmconnection <<EOF
+[connection]
+id=Wired connection 1
+type=ethernet
+interface-name=*
+autoconnect=true
+
+[ipv4]
+method=auto
+
+[ipv6]
+method=auto
+EOF
+chmod 0600 /etc/NetworkManager/system-connections/lab-dhcp.nmconnection
+rm -rf /etc/autoinstall /var/lib/autoinstall /var/adm/autoinstall/cache /var/adm/autoinstall/init.d /var/adm/autoinstall/files
+rm -f /etc/sysconfig/autoinstall
+rm -f /etc/systemd/system/default.target.wants/YaST2-Firstboot.service /etc/systemd/system/default.target.wants/YaST2-Second-Stage.service
+rm -f /etc/systemd/system/autoyast.service /etc/systemd/system/autoyast-initscripts.service /etc/systemd/system/autoyast-second-stage.service
+install -d -m0755 /mnt/shared
+grep -q '^shared /mnt/shared virtiofs' /etc/fstab || echo 'shared /mnt/shared virtiofs defaults,nofail 0 0' >> /etc/fstab
+install -d -o __VM_USER__ -g users /home/__VM_USER__/.config/gtk-3.0
+echo 'file:///mnt/shared Shared' > /home/__VM_USER__/.config/gtk-3.0/bookmarks
+chown -R __VM_USER__:users /home/__VM_USER__/.config
+mkdir -p /etc/gdm
+cat > /etc/gdm/custom.conf <<EOF
+[daemon]
+AutomaticLoginEnable=True
+AutomaticLogin=__VM_USER__
+EOF
+chmod 0644 /etc/gdm/custom.conf
+if [ -f /etc/sysconfig/displaymanager ]; then
+    sed -i 's/^DISPLAYMANAGER_AUTOLOGIN=.*/DISPLAYMANAGER_AUTOLOGIN="__VM_USER__"/' /etc/sysconfig/displaymanager
+    sed -i 's/^DISPLAYMANAGER_PASSWORD_LESS_LOGIN=.*/DISPLAYMANAGER_PASSWORD_LESS_LOGIN="no"/' /etc/sysconfig/displaymanager
+    grep -q '^DISPLAYMANAGER_AUTOLOGIN=' /etc/sysconfig/displaymanager || echo 'DISPLAYMANAGER_AUTOLOGIN="__VM_USER__"' >> /etc/sysconfig/displaymanager
+    grep -q '^DISPLAYMANAGER_PASSWORD_LESS_LOGIN=' /etc/sysconfig/displaymanager || echo 'DISPLAYMANAGER_PASSWORD_LESS_LOGIN="no"' >> /etc/sysconfig/displaymanager
+fi
+]]></source>
+      </script>
+    </chroot-scripts>
+  </scripts>
+  <services-manager>
+    <default_target>graphical</default_target>
+    <services>
+      <enable config:type="list">
+        <service>NetworkManager</service>
+        <service>qemu-guest-agent</service>
+      </enable>
+      <disable config:type="list">
+        <service>autoyast</service>
+        <service>autoyast-initscripts</service>
+        <service>autoyast-second-stage</service>
+        <service>YaST2-Firstboot</service>
+        <service>YaST2-Second-Stage</service>
+      </disable>
+    </services>
+  </services-manager>
+  <software>
+    <products config:type="list">
+      <product>openSUSE</product>
+    </products>
+    <patterns config:type="list">
+      <pattern>enhanced_base</pattern>
+      <pattern>gnome</pattern>
+      <pattern>kvm_server</pattern>
+    </patterns>
+    <packages config:type="list">
+      <package>qemu-guest-agent</package>
+      <package>NetworkManager</package>
+      <package>iproute2</package>
+      <package>git</package>
+      <package>curl</package>
+      <package>wget</package>
+      <package>vim</package>
+    </packages>
+  </software>
+</profile>

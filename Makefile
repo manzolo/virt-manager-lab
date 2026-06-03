@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 lubuntu26.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 kubuntu24.04 xubuntu24.04 ubuntu-mate24.04 ubuntu-budgie24.04 kubuntu26.04 xubuntu26.04 ubuntu-mate26.04 ubuntu-budgie26.04 silverblue arch niri Windows10 Windows11 Windows7U
+VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 lubuntu26.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 kubuntu24.04 xubuntu24.04 ubuntu-mate24.04 ubuntu-budgie24.04 kubuntu26.04 xubuntu26.04 ubuntu-mate26.04 ubuntu-budgie26.04 silverblue rocky9 alma9 tumbleweed arch niri Windows10 Windows11 Windows7U
 
 SCRIPT_debian13 := scripts/install-debian13.sh
 SCRIPT_ubuntu24 := scripts/install-ubuntu24.04.sh
@@ -28,6 +28,9 @@ SCRIPT_win10 := scripts/win10/create_win10_vm.sh
 SCRIPT_win11 := scripts/win11/create_win11_vm.sh
 SCRIPT_win7u := scripts/win7u/create_win7u_vm.sh
 SCRIPT_silverblue := scripts/install-silverblue.sh
+SCRIPT_rocky9 := scripts/install-rocky.sh
+SCRIPT_alma9 := scripts/install-alma.sh
+SCRIPT_tumbleweed := scripts/install-tumbleweed.sh
 SCRIPT_arch := scripts/install-arch.sh
 SCRIPT_niri := scripts/install-niri.sh
 
@@ -54,6 +57,9 @@ VM_win10 := Windows10
 VM_win11 := Windows11
 VM_win7u := Windows7U
 VM_silverblue := silverblue
+VM_rocky9 := rocky9
+VM_alma9 := alma9
+VM_tumbleweed := tumbleweed
 VM_arch := arch
 VM_niri := niri
 
@@ -82,7 +88,8 @@ help:
 		'  Xubuntu:     xubuntu22 xubuntu24 xubuntu26' \
 		'  Ubuntu MATE: mate22 mate24 mate26' \
 		'  Budgie:      budgie22 budgie24 budgie26' \
-		'  Altri:       silverblue (Fedora immutabile) · arch · niri' \
+		'  Enterprise:  rocky9 alma9' \
+		'  Altri:       silverblue (Fedora immutabile) · tumbleweed · arch · niri' \
 		'' \
 		'PROFILI WINDOWS' \
 		'  win10 win11 win7u' \
@@ -131,6 +138,9 @@ list:
 	@printf '%-10s %s\n' 'win11' '$(VM_win11)'
 	@printf '%-10s %s\n' 'win7u' '$(VM_win7u)'
 	@printf '%-10s %s\n' 'silverblue' '$(VM_silverblue)'
+	@printf '%-10s %s\n' 'rocky9' '$(VM_rocky9)'
+	@printf '%-10s %s\n' 'alma9' '$(VM_alma9)'
+	@printf '%-10s %s\n' 'tumbleweed' '$(VM_tumbleweed)'
 	@printf '%-10s %s\n' 'arch' '$(VM_arch)'
 	@printf '%-10s %s\n' 'niri' '$(VM_niri)'
 
@@ -162,6 +172,9 @@ status:
 		'win11:$(VM_win11)' \
 		'win7u:$(VM_win7u)' \
 		'silverblue:$(VM_silverblue)' \
+		'rocky9:$(VM_rocky9)' \
+		'alma9:$(VM_alma9)' \
+		'tumbleweed:$(VM_tumbleweed)' \
 		'arch:$(VM_arch)' \
 		'niri:$(VM_niri)'; do \
 		make_id="$${row%%:*}"; \
@@ -269,6 +282,9 @@ $(eval $(call INSTALL_TARGETS,win10))
 $(eval $(call INSTALL_TARGETS,win11))
 $(eval $(call INSTALL_TARGETS,win7u))
 $(eval $(call INSTALL_TARGETS,silverblue))
+$(eval $(call INSTALL_TARGETS,rocky9))
+$(eval $(call INSTALL_TARGETS,alma9))
+$(eval $(call INSTALL_TARGETS,tumbleweed))
 $(eval $(call INSTALL_TARGETS,arch))
 $(eval $(call INSTALL_TARGETS,niri))
 

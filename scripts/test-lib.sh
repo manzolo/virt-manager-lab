@@ -21,9 +21,24 @@
 #     shared   virtiofs montato (si/no/-)
 #     extra    Linux: n. sessioni          | Windows: hostname
 
+# Credenziali VM (per fallback SSH); SCRIPT_DIR ereditato dal chiamante.
+# shellcheck source=lab.env
+source "${SCRIPT_DIR}/lab.env" 2>/dev/null || true
+
 # ---- helper di base -------------------------------------------------------
 vmstate() { LC_ALL=C virsh domstate "$1" 2>/dev/null | head -n1; }
 ga_ready() { virsh qemu-agent-command "$1" '{"execute":"guest-ping"}' >/dev/null 2>&1; }
+
+# Fallback SSH per sistemi con guest-exec disabilitato (es. RHEL/Rocky/Alma).
+# Ricava l'IP via guest-network-get-interfaces (non richiede guest-exec).
+ssh_run() {
+  local vm="$1" cmd="$2" ip
+  ip="$(virsh qemu-agent-command "$vm" '{"execute":"guest-network-get-interfaces"}' 2>/dev/null \
+    | grep -o '"ip-address":"[0-9.]*"' | grep -v '"127\.' | head -1 | cut -d'"' -f4)"
+  [ -z "$ip" ] && return 1
+  sshpass -p "${VM_PASS:-}" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+    -o BatchMode=no -o LogLevel=ERROR "${VM_USER:-manzolo}@${ip}" "$cmd" 2>/dev/null
+}
 
 # Escape minimale per inserire una stringa dentro JSON (backslash e doppi apici).
 json_escape() {
@@ -171,9 +186,11 @@ run_one_linux() {
     if ga_ready "$vm"; then
       agent=1
       # Check primario: systemctl (funziona su Ubuntu/Debian; bloccato da SELinux su Fedora).
-      # Fallback: socket X11 o Wayland presenti (funziona anche con SELinux restrittivo).
+      # Fallback 1: socket X11 o Wayland presenti (funziona anche con SELinux restrittivo).
+      # Fallback 2: SSH (per sistemi con guest-exec disabilitato, es. RHEL/Rocky/Alma).
       if ga_run "$vm" 'systemctl get-default | grep -qx graphical.target && systemctl is-active --quiet display-manager.service' >/dev/null 2>&1 \
-         || ga_run "$vm" '[ -S /tmp/.X11-unix/X0 ] || ls /run/user/[0-9]*/wayland-0 2>/dev/null | grep -q .' >/dev/null 2>&1; then
+         || ga_run "$vm" '[ -S /tmp/.X11-unix/X0 ] || ls /run/user/[0-9]*/wayland-0 2>/dev/null | grep -q .' >/dev/null 2>&1 \
+         || ssh_run "$vm" 'systemctl get-default | grep -qx graphical.target && systemctl is-active --quiet display-manager.service' >/dev/null 2>&1; then
         status="PASS"; phase="desktop"; break
       fi
     fi

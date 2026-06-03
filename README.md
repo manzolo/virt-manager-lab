@@ -31,6 +31,9 @@ virt-manager-lab/
 │   ├── install-xubuntu26.04.sh    # Xubuntu 26.04 LTS unattended (wrapper flavor)
 │   ├── install-mate26.04.sh       # Ubuntu MATE 26.04 LTS unattended (wrapper flavor)
 │   ├── install-budgie26.04.sh     # Ubuntu Budgie 26.04 LTS unattended (wrapper flavor)
+│   ├── install-rocky.sh           # Rocky Linux unattended (kickstart)
+│   ├── install-alma.sh            # AlmaLinux unattended (kickstart)
+│   ├── install-tumbleweed.sh      # openSUSE Tumbleweed unattended (AutoYaST)
 │   ├── win10/
 │   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
 │   │   └── autounattend.xml       # risposta automatica setup Win10
@@ -50,6 +53,8 @@ virt-manager-lab/
 ├── lubuntu24.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 24.04
 ├── lubuntu26.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 26.04
 ├── ubuntu-flavor22.04-autoinstall.yaml # template comune flavor 22/24/26
+├── enterprise-linux.ks            # kickstart comune Rocky/AlmaLinux
+├── tumbleweed-autoyast.xml        # AutoYaST Tumbleweed
 └── vms/                           # documentazione di ogni VM (hardware, pacchetti, note)
 ```
 
@@ -133,12 +138,15 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `silverblue`, `arch`, `niri`, `win10`, `win11`, `win7u`.
+ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `silverblue`, `rocky9`, `alma9`, `tumbleweed`, `arch`, `niri`, `win10`, `win11`, `win7u`.
 
-I profili `silverblue` (Fedora Silverblue immutabile, kickstart), `arch` (Arch Linux,
-GNOME) e `niri` (Arch + compositor Wayland niri + shell noctalia) sono installer più
-recenti: vedi [vms/silverblue.md](vms/silverblue.md), [vms/arch.md](vms/arch.md),
-[vms/niri.md](vms/niri.md) e [docs/new-distros.md](docs/new-distros.md).
+I profili `silverblue` (Fedora Silverblue immutabile, kickstart), `rocky9`,
+`alma9`, `tumbleweed`, `arch` (Arch Linux, GNOME) e `niri` (Arch +
+compositor Wayland niri + shell noctalia) sono installer piu' recenti: vedi
+[vms/silverblue.md](vms/silverblue.md), [vms/rocky9.md](vms/rocky9.md),
+[vms/alma9.md](vms/alma9.md), [vms/tumbleweed.md](vms/tumbleweed.md),
+[vms/arch.md](vms/arch.md), [vms/niri.md](vms/niri.md)
+e [docs/new-distros.md](docs/new-distros.md).
 
 Questi ID sono scorciatoie del Makefile, non gli ID numerici mostrati da libvirt.
 Per ricavare l'ID numerico runtime di una VM avviata:

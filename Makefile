@@ -100,7 +100,7 @@ help:
 		'  make destroy-<id>         Spegnimento forzato' \
 		'  make undefine-<id>        Rimuove definizione libvirt, non il disco' \
 		'  make clean-<id>           Rimuove VM + suo disco qcow2 (non ISO/altri dischi)' \
-		'  make all                  Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
+		'  make clean-all            Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
 		'  make report               Rigenera vm-report.html' \
 		'  make cheatsheet           Rigenera docs/virsh-cheatsheet.pdf' \
 		'  make v2p [VM=nome]        Scrive il disco di una VM su un disco FISICO (V2P, distruttivo)' \
@@ -290,8 +290,8 @@ $(eval $(call INSTALL_TARGETS,niri))
 
 # Pulizia di tutte le VM gestite (VM + disco qcow2 principale, MAI ISO/altri dischi).
 # Chiede conferma perche' include anche le VM Windows (reinstall lunghe).
-.PHONY: clean-all all
-clean-all all:
+.PHONY: clean-all
+clean-all:
 	@echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale di TUTTE le VM gestite."
 	@echo "  ISO e volumi in altri pool NON vengono toccati."
 	@echo "  VM coinvolte: $(VMS)"

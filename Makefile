@@ -101,6 +101,7 @@ help:
 		'  make undefine-<id>        Rimuove definizione libvirt, non il disco' \
 		'  make clean-<id>           Rimuove VM + suo disco qcow2 (non ISO/altri dischi)' \
 		'  make clean-all            Pulisce TUTTE le VM gestite (VM+disco, con conferma)' \
+		'  make clean-test           Pulisce solo le VM dei test e2e (con conferma)' \
 		'  make report               Rigenera vm-report.html' \
 		'  make cheatsheet           Rigenera docs/virsh-cheatsheet.pdf' \
 		'  make v2p [VM=nome]        Scrive il disco di una VM su un disco FISICO (V2P, distruttivo)' \
@@ -298,3 +299,17 @@ clean-all:
 	@read -rp "Confermi la rimozione di tutte? [s/N] " a; \
 	if [ "$$a" != "s" ] && [ "$$a" != "S" ]; then echo "Annullato."; exit 0; fi; \
 	for vm in $(VMS); do bash scripts/clean-vm.sh "$$vm"; done
+
+# Pulizia delle SOLE VM coperte dai test e2e (quelle in test-linux.env + test-win.env).
+# Ancorata agli env: resta corretta anche se l'inventario VMS diverge dai test.
+.PHONY: clean-test
+clean-test:
+	@vms="$$( . scripts/test-linux.env; . scripts/test-win.env; \
+	  for it in "$${TEST_ITEMS[@]}"; do echo "$$it" | cut -d'|' -f2; done; \
+	  for it in "$${TEST_WIN_ITEMS[@]}"; do echo "$$it" | cut -d'|' -f2; done )"; \
+	echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale delle SOLE VM di test."; \
+	echo "  ISO e volumi in altri pool NON vengono toccati."; \
+	echo "  VM coinvolte: $$vms"; \
+	read -rp "Confermi la rimozione delle VM di test? [s/N] " a; \
+	if [ "$$a" != "s" ] && [ "$$a" != "S" ]; then echo "Annullato."; exit 0; fi; \
+	for vm in $$vms; do bash scripts/clean-vm.sh "$$vm"; done

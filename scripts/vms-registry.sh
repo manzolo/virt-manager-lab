@@ -21,7 +21,7 @@ REGISTRY="${VMLAB_REGISTRY:-$REPO_DIR/vms.tsv}"
 # Motori condivisi: non sono entry point di installazione, quindi non compaiono
 # nel registro. Elencarli qui evita falsi positivi nel controllo di copertura.
 ENGINE_SCRIPTS=(
-  scripts/install-ubuntu-flavor22.04.sh
+  scripts/install-ubuntu-flavor.sh
   scripts/install-enterprise-linux.sh
 )
 

@@ -49,9 +49,9 @@ jobs:
       - name: Shell syntax
         run: |
           for s in $(awk -F'\t' '$1 ~ /^[a-z0-9]/ {print $3}' vms.tsv) \
-                   scripts/install-ubuntu-flavor22.04.sh \
-                   scripts/lib/subiquity-install.sh \
+                   scripts/install-ubuntu-flavor.sh \
                    scripts/install-enterprise-linux.sh \
+                   scripts/lib/subiquity-install.sh \
                    scripts/vms-registry.sh \
                    scripts/test-lib.sh scripts/test-all.sh \
                    scripts/test-linux.sh scripts/test-win.sh \
@@ -65,7 +65,7 @@ jobs:
       # si saltano esplicitamente invece di far fallire il job.
       - name: YAML autoinstall syntax
         run: |
-          for f in *-autoinstall.yaml; do
+          for f in unattended/*-autoinstall.yaml; do
             if grep -q '^__[A-Z_]*__$' "$f"; then
               echo "$f SKIP (template, valido solo dopo il rendering)"
               continue
@@ -76,13 +76,16 @@ jobs:
 
       - name: XML syntax (autounattend / autoyast)
         run: |
-          for f in scripts/win*/autounattend.xml tumbleweed-autoyast.xml; do
+          for f in scripts/win*/autounattend.xml unattended/tumbleweed-autoyast.xml; do
             xmllint --noout "$f" && echo "$f OK"
           done
 
       - name: Required files present
         run: |
-          test -f Debian13-preseed.cfg           && echo "Debian13-preseed.cfg OK"
-          test -f enterprise-linux.ks            && echo "enterprise-linux.ks OK"
-          test -f vms.tsv                        && echo "vms.tsv OK"
-          test -f scripts/win11/autounattend.xml && echo "autounattend.xml OK"
+          test -f vms.tsv                             && echo "vms.tsv OK"
+          test -f unattended/Debian13-preseed.cfg     && echo "Debian13-preseed.cfg OK"
+          test -f unattended/enterprise-linux.ks      && echo "enterprise-linux.ks OK"
+          test -f unattended/fedora-silverblue.ks     && echo "fedora-silverblue.ks OK"
+          test -f unattended/ubuntu-flavor-autoinstall.yaml && echo "ubuntu-flavor-autoinstall.yaml OK"
+          test -f scripts/lib/subiquity-install.sh    && echo "subiquity-install.sh OK"
+          test -f scripts/win11/autounattend.xml      && echo "autounattend.xml OK"

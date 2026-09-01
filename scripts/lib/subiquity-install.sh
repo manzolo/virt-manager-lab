@@ -37,7 +37,7 @@
 #   render_autoinstall <src> <dst>
 #     Se lo script chiamante la definisce, viene usata al posto del semplice
 #     render_template di lab.env. Serve a chi deve generare blocchi YAML
-#     (vedi scripts/install-ubuntu-flavor22.04.sh).
+#     (vedi scripts/install-ubuntu-flavor.sh).
 # =============================================================================
 
 _LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,7 +50,7 @@ REPO_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
 source "$SCRIPTS_DIR/lab.env"
 
 STORAGE="$VM_BASE_DIR/storage"
-UNATTENDED_DIR="$REPO_DIR"
+UNATTENDED_DIR="$REPO_DIR/unattended"
 SHARED_DIR="${SHARED_DIR:-$STORAGE/shared}"
 
 # -----------------------------------------------------------------------------

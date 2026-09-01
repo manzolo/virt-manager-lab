@@ -53,7 +53,7 @@
 
 ## Metodo di installazione
 
-Base Ubuntu **24.04.4** live-server + autoinstall, metapacchetto **KDE Plasma** installato nella fase principale di curtin (lista `packages:` del template condiviso `ubuntu-flavor22.04-autoinstall.yaml`).
+Base Ubuntu **24.04.4** live-server + autoinstall, metapacchetto **KDE Plasma** installato nella fase principale di curtin (lista `packages:` del template condiviso `unattended/ubuntu-flavor-autoinstall.yaml`).
 
 ## Note
 

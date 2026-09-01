@@ -11,7 +11,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
-REPO_DIR="$VM_BASE_DIR/virt-manager"
+# Il repo si individua dalla posizione dello script: la cartella del clone puo' chiamarsi come si vuole.
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 EL_DISTRO="${EL_DISTRO:-rocky}"
 EL_MAJOR="${EL_MAJOR:-9}"
@@ -19,7 +20,7 @@ FIRSTBOOT_AUTOSTART="${FIRSTBOOT_AUTOSTART:-true}"
 FIRSTBOOT_WAIT_TIMEOUT="${FIRSTBOOT_WAIT_TIMEOUT:-5400}"
 DISK_SIZE="${DISK_SIZE:-40G}"
 SHARED_DIR="$STORAGE/shared"
-KS_TEMPLATE="$REPO_DIR/enterprise-linux.ks"
+KS_TEMPLATE="$REPO_DIR/unattended/enterprise-linux.ks"
 
 case "$EL_DISTRO" in
   rocky)

@@ -45,7 +45,7 @@ OS_VARIANTS="${OS_VARIANT_CANDIDATE:-ubuntu${UBUNTU_VERSION}} ${OS_VARIANT_FALLB
 ISO_ORIG="$STORAGE/Iso/Distro/ubuntu-${UBUNTU_POINT_VERSION}-live-server-amd64.iso"
 ISO_AUTO="$STORAGE/Iso/Distro/$FLAVOR_ID-${UBUNTU_POINT_VERSION}-autoinstall.iso"
 ISO_URL="https://releases.ubuntu.com/${UBUNTU_POINT_VERSION}/ubuntu-${UBUNTU_POINT_VERSION}-live-server-amd64.iso"
-AUTOINSTALL_TEMPLATE="$UNATTENDED_DIR/ubuntu-flavor22.04-autoinstall.yaml"
+AUTOINSTALL_TEMPLATE="$UNATTENDED_DIR/ubuntu-flavor-autoinstall.yaml"
 GRUB_AUTO_EXTRA_ARGS="fsck.mode=skip"
 
 # -----------------------------------------------------------------------------

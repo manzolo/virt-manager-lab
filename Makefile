@@ -46,7 +46,7 @@ ids_in_group = $(strip $(foreach id,$(IDS),$(if $(filter $(1),$(GROUP_$(id))),$(
 .PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check check-registry
 help:
 	@printf '%s\n' \
-		'virt-manager-lab - gestione VM unattended' \
+		'kvm-lab - VM KVM/QEMU installate in modo unattended' \
 		'' \
 		'USO RAPIDO' \
 		'  make setup                Installa dipendenze + pool/rete libvirt (idempotente)' \

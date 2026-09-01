@@ -16,7 +16,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
-REPO_DIR="$VM_BASE_DIR/virt-manager"
+# Il repo si individua dalla posizione dello script: la cartella del clone puo' chiamarsi come si vuole.
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 VM_NAME="silverblue"
 FIRSTBOOT_AUTOSTART="${FIRSTBOOT_AUTOSTART:-true}"
@@ -27,7 +28,7 @@ FED_VER="${FED_VER:-44}"
 FED_BUILD="${FED_BUILD:-1.7}"
 ISO_ORIG="$STORAGE/Iso/Distro/Fedora-Silverblue-ostree-x86_64-${FED_VER}.iso"
 ISO_OEMDRV="$STORAGE/Iso/Distro/silverblue-oemdrv-ks.iso"
-KS_TEMPLATE="$REPO_DIR/fedora-silverblue.ks"
+KS_TEMPLATE="$REPO_DIR/unattended/fedora-silverblue.ks"
 SHARED_DIR="$STORAGE/shared"
 ISO_URL="https://dl.fedoraproject.org/pub/fedora/linux/releases/${FED_VER}/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-${FED_VER}-${FED_BUILD}.iso"
 

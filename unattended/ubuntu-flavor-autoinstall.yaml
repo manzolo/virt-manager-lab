@@ -2,7 +2,7 @@
 # =============================================================================
 # Ubuntu flavor — Autoinstall unattended
 # Base installer: Ubuntu live-server + pacchetto desktop del flavor
-# Template usato da scripts/install-ubuntu-flavor22.04.sh
+# Template usato da scripts/install-ubuntu-flavor.sh (flavor 22.04 / 24.04 / 26.04)
 # =============================================================================
 autoinstall:
   version: 1

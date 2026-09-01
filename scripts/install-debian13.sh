@@ -8,14 +8,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
-REPO_DIR="$VM_BASE_DIR/virt-manager"
+# Il repo si individua dalla posizione dello script: la cartella del clone puo' chiamarsi come si vuole.
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 VM_NAME="Debian13"
 DISK_PATH="$STORAGE/hd/Debian13.qcow2"
 DISK_SIZE="50G"
 ISO_ORIG="$STORAGE/Iso/Distro/debian-13.0.0-amd64-DVD-1.iso"
 ISO_PRESEED="$STORAGE/Iso/Distro/debian-13-preseed.iso"
-PRESEED_TEMPLATE="$REPO_DIR/Debian13-preseed.cfg"
+PRESEED_TEMPLATE="$REPO_DIR/unattended/Debian13-preseed.cfg"
 ISO_WORKDIR="/tmp/debian13-iso-build"
 ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-dvd/debian-13.0.0-amd64-DVD-1.iso"
 

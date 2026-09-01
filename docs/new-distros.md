@@ -68,7 +68,7 @@ e il mount virtiofs su `/mnt/shared`.
 
 | VM         | script                         | template                     | stato        |
 |------------|--------------------------------|------------------------------|--------------|
-| silverblue | scripts/install-silverblue.sh  | fedora-silverblue.ks         | first-draft  |
+| silverblue | scripts/install-silverblue.sh  | unattended/fedora-silverblue.ks        | first-draft  |
 | arch       | scripts/install-arch.sh        | arch-archinstall.json        | first-draft  |
 | niri       | scripts/install-niri.sh        | arch-niri.json + asset       | first-draft  |
 

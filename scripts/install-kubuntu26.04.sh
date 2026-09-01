@@ -21,4 +21,4 @@ export DESKTOP_INSTALL_MODE="firstboot"
 export DISK_SIZE="35G"
 export MEMORY="${MEMORY:-4096}"
 
-exec "$SCRIPT_DIR/install-ubuntu-flavor22.04.sh"
+exec "$SCRIPT_DIR/install-ubuntu-flavor.sh"

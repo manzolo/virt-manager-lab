@@ -53,7 +53,7 @@
 
 ## Metodo di installazione
 
-Base Ubuntu **22.04.5** live-server + autoinstall, metapacchetto **MATE** installato nella fase principale di curtin (lista `packages:` del template condiviso `ubuntu-flavor22.04-autoinstall.yaml`).
+Base Ubuntu **22.04.5** live-server + autoinstall, metapacchetto **MATE** installato nella fase principale di curtin (lista `packages:` del template condiviso `unattended/ubuntu-flavor-autoinstall.yaml`).
 
 ## Note
 

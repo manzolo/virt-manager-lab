@@ -57,7 +57,7 @@
 
 - Script: `scripts/install-silverblue.sh` (Makefile: `make silverblue`)
 - Meccanismo: **kickstart** consegnato ad Anaconda via volume etichettato **OEMDRV**
-  (`fedora-silverblue.ks`); l'ISO Fedora originale non viene modificata. Il ref ostree
+  (`unattended/fedora-silverblue.ks`); l'ISO Fedora originale non viene modificata. Il ref ostree
   viene ricavato dalla ISO (fallback `fedora/<VER>/x86_64/silverblue`). Boot dall'ISO via
   `--cdrom`; a fine install la VM si spegne e parte il primo boot (autologin GDM).
 - Variabili: `FED_VER` (default 44), `FED_BUILD` (default 1.7), `FIRSTBOOT_AUTOSTART`.

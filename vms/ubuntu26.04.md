@@ -87,7 +87,7 @@ host_shared  /mnt/shared  virtiofs  nofail,x-systemd.automount,x-systemd.idle-ti
 | Locale     | it_IT.UTF-8                     |
 | Tastiera   | it                              |
 | Script     | `scripts/install-ubuntu26.04.sh`|
-| YAML       | `ubuntu26.04-autoinstall.yaml`  |
+| YAML       | `unattended/ubuntu26.04-autoinstall.yaml`  |
 
 ### ISO
 

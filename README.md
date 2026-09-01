@@ -1,76 +1,69 @@
-# virt-manager-lab
+# kvm-lab
 
 Script di installazione unattended e documentazione del mio lab personale di virtualizzazione KVM/QEMU su Linux.
 
 Il repo raccoglie tutto quello che serve per ricreare da zero le VM del lab: script bash che costruiscono la ISO con autoinstall integrato, la creano e la avviano in un unico comando — senza toccare tastiera durante l'installazione.
+
+Strumenti usati: `virt-install`, `virsh`, `qemu-img`, `xorriso`. (Il nome precedente, *virt-manager-lab*, era fuorviante: la GUI virt-manager non serve.)
 
 ---
 
 ## Cosa c'è nel repo
 
 ```
-virt-manager-lab/
-├── vms.tsv                        # REGISTRO VM: unica fonte di verita' dell'inventario
-├── Makefile                       # target generati dal registro (install/start/shutdown/status)
+kvm-lab/
+├── vms.tsv                  # REGISTRO VM: unica fonte di verita' dell'inventario
+├── Makefile                 # target generati dal registro (install/start/shutdown/clean/test)
+├── unattended/              # risposte automatiche degli installer (template con placeholder)
+│   ├── *-autoinstall.yaml   #   subiquity (Ubuntu, Lubuntu, flavor)
+│   ├── Debian13-preseed.cfg #   preseed Debian
+│   ├── enterprise-linux.ks  #   kickstart Rocky/AlmaLinux
+│   ├── fedora-silverblue.ks #   kickstart Fedora Silverblue
+│   └── tumbleweed-autoyast.xml  # AutoYaST openSUSE
 ├── scripts/
-│   ├── vms-registry.sh            # lettura/validazione di vms.tsv (make check-registry)
-│   ├── lab.env                    # credenziali e percorsi centralizzati (VM_USER, VM_PASS, VM_BASE_DIR…)
-│   ├── install-debian13.sh        # Debian 13 unattended (preseed)
-│   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
-│   ├── install-ubuntu26.04.sh     # Ubuntu 26.04 LTS unattended (autoinstall)
-│   ├── install-lubuntu20.04.sh    # Lubuntu 20.04 LTS unattended (autoinstall)
-│   ├── install-lubuntu22.04.sh    # Lubuntu 22.04 LTS unattended (autoinstall)
-│   ├── install-lubuntu24.04.sh    # Lubuntu 24.04 LTS unattended (autoinstall)
-│   ├── install-kubuntu22.04.sh    # Kubuntu 22.04 LTS unattended (wrapper flavor)
-│   ├── install-xubuntu22.04.sh    # Xubuntu 22.04 LTS unattended (wrapper flavor)
-│   ├── install-mate22.04.sh       # Ubuntu MATE 22.04 LTS unattended (wrapper flavor)
-│   ├── install-budgie22.04.sh     # Ubuntu Budgie 22.04 LTS unattended (wrapper flavor)
-│   ├── install-kubuntu24.04.sh    # Kubuntu 24.04 LTS unattended (wrapper flavor)
-│   ├── install-xubuntu24.04.sh    # Xubuntu 24.04 LTS unattended (wrapper flavor)
-│   ├── install-mate24.04.sh       # Ubuntu MATE 24.04 LTS unattended (wrapper flavor)
-│   ├── install-budgie24.04.sh     # Ubuntu Budgie 24.04 LTS unattended (wrapper flavor)
-│   ├── install-kubuntu26.04.sh    # Kubuntu 26.04 LTS unattended (wrapper flavor)
-│   ├── install-xubuntu26.04.sh    # Xubuntu 26.04 LTS unattended (wrapper flavor)
-│   ├── install-mate26.04.sh       # Ubuntu MATE 26.04 LTS unattended (wrapper flavor)
-│   ├── install-budgie26.04.sh     # Ubuntu Budgie 26.04 LTS unattended (wrapper flavor)
-│   ├── install-rocky.sh           # Rocky Linux unattended (kickstart)
-│   ├── install-alma.sh            # AlmaLinux unattended (kickstart)
-│   ├── install-tumbleweed.sh      # openSUSE Tumbleweed unattended (AutoYaST)
-│   ├── win10/
-│   │   ├── create_win10_vm.sh     # Windows 10 con autounattend
-│   │   └── autounattend.xml       # risposta automatica setup Win10
-│   ├── win11/
-│   │   ├── create_win11_vm.sh     # Windows 11 con autounattend
-│   │   └── autounattend.xml       # risposta automatica setup Win11
-│   └── win7u/
-│       ├── create_win7u_vm.sh     # Windows 7 Ultimate con autounattend
-│       ├── autounattend.xml       # risposta automatica setup Win7
-│       ├── enable_win7u_smb_shared.sh  # configura Samba sul host per shared Z:
-│       └── enable_win7u_shared.sh      # aggiunge canale SPICE WebDAV alla VM
-├── Debian13-preseed.cfg           # configurazione preseed Debian
-├── ubuntu24.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 24.04
-├── ubuntu26.04-autoinstall.yaml   # cloud-init autoinstall Ubuntu 26.04
-├── lubuntu20.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 20.04
-├── lubuntu22.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 22.04
-├── lubuntu24.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 24.04
-├── lubuntu26.04-autoinstall.yaml  # cloud-init autoinstall Lubuntu 26.04
-├── ubuntu-flavor22.04-autoinstall.yaml # template comune flavor 22/24/26
-├── enterprise-linux.ks            # kickstart comune Rocky/AlmaLinux
-├── tumbleweed-autoyast.xml        # AutoYaST Tumbleweed
-└── vms/                           # documentazione di ogni VM (hardware, pacchetti, note)
+│   ├── lab.env              # credenziali e percorsi (VM_USER, VM_PASS, VM_BASE_DIR...)
+│   ├── vms-registry.sh      # lettura/validazione di vms.tsv (make check-registry)
+│   ├── lib/
+│   │   └── subiquity-install.sh   # MOTORE comune: ISO + disco + virt-install + first boot
+│   ├── install-<distro>.sh  # un file per VM: solo configurazione, poi chiama il motore
+│   ├── install-ubuntu-flavor.sh   # motore dei flavor (Kubuntu/Xubuntu/MATE/Budgie 22/24/26)
+│   ├── install-enterprise-linux.sh # motore Rocky/AlmaLinux (kickstart)
+│   ├── test-*.sh, test-lib.sh     # test end-to-end (make test-linux / test-win / test-all)
+│   ├── setup.sh, clean-vm.sh, vm-report.sh, v2p-deploy.sh, gen-cheatsheet.sh
+│   ├── assets/              # bootstrap Arch/niri
+│   └── win10/ win11/ win7u/ # Windows: create_*_vm.sh + autounattend.xml
+├── vms/                     # scheda di ogni VM (hardware, pacchetti, note)
+└── docs/                    # cheat sheet virsh, note sulle distro nuove
 ```
+
+### Come sono fatti gli script di installazione
+
+Tre livelli, dal generale al particolare:
+
+1. **`scripts/lib/subiquity-install.sh`** — motore condiviso per tutte le VM basate
+   su subiquity (Ubuntu, Lubuntu, flavor): scarica la ISO, chiede conferma se la VM
+   esiste, crea il disco, inietta l'autoinstall nella ISO con `xorriso`, lancia
+   `virt-install`, e opzionalmente orchestra il desktop al primo boot.
+2. **Motori di famiglia** — `install-ubuntu-flavor.sh` (genera i blocchi YAML dei
+   flavor) e `install-enterprise-linux.sh` (kickstart Rocky/Alma).
+3. **Un file per VM** — `install-ubuntu24.04.sh`, `install-lubuntu22.04.sh`,
+   `install-kubuntu26.04.sh`, ...: 15-30 righe di sola configurazione (nome VM,
+   ISO, dimensione disco, RAM, template) e poi `subiquity_install` o `exec` del
+   motore di famiglia. Per aggiungere una VM si copia uno di questi.
+
+Debian, Silverblue, Tumbleweed, Arch e Windows hanno installer propri (preseed,
+kickstart, AutoYaST, archiso, autounattend) e non passano dal motore subiquity.
 
 ---
 
 ## Avvio rapido
 
 ```bash
-# 1. Clona il repo nel percorso atteso dagli script
-git clone https://github.com/manzolo/virt-manager-lab.git \
-  ~/Workspaces/qemu/virt-manager
+# 1. Clona il repo (in una cartella qualsiasi: gli script si orientano da soli)
+git clone https://github.com/manzolo/virt-manager-lab.git kvm-lab
+cd kvm-lab
 
 # 2. Installa dipendenze e crea pool/rete libvirt (idempotente)
-cd ~/Workspaces/qemu/virt-manager
 make setup
 
 # 3. Verifica l'ambiente
@@ -80,10 +73,10 @@ make setup-check
 make lubuntu24
 ```
 
-> **Percorso clone**: gli script usano `VM_BASE_DIR` definito in `scripts/lab.env`
-> (default `~/Workspaces/qemu`, il repo deve stare in `$VM_BASE_DIR/virt-manager`).
-> Per usare un percorso diverso modifica `VM_BASE_DIR` in `scripts/lab.env`
-> **prima** di eseguire qualsiasi script.
+> **Dove stanno i dischi e le ISO**: in `$VM_BASE_DIR/storage/` con `VM_BASE_DIR`
+> definito in `scripts/lab.env` (default `~/Workspaces/qemu`). Adattalo alla tua
+> macchina **prima** di eseguire qualsiasi script. La posizione del repo invece
+> non conta: ogni script individua la root del repo dalla propria posizione.
 
 ---
 
@@ -322,7 +315,8 @@ make mate26
 make budgie26
 ```
 
-Questi profili usano lo stesso template autoinstall comune e cambiano versione
+Questi profili usano lo stesso template (`unattended/ubuntu-flavor-autoinstall.yaml`)
+e lo stesso motore (`scripts/install-ubuntu-flavor.sh`), e cambiano solo versione
 Ubuntu, pacchetto desktop, display manager, Plymouth e risorse della VM.
 
 Su 26.04 il desktop viene installato al primo boot dal servizio
@@ -381,7 +375,7 @@ Ogni script installa un sistema GNOME completo con questi pacchetti aggiuntivi:
 | `aspell` | correttore ortografico |
 | `linux-generic-hwe-*` | kernel HWE più recente |
 
-Credenziali default: utente **`manzolo`**, password **`manzolo`** — per cambiarle modifica solo `scripts/lab.env` (rigenera `VM_PASS_HASH` con `openssl passwd -6 "<nuova_password>"`). I YAML, preseed e XML sono template con placeholder e vengono materializzati a runtime dagli script.
+Credenziali default: utente **`manzolo`**, password **`manzolo`** — per cambiarle modifica solo `scripts/lab.env` (rigenera `VM_PASS_HASH` con `openssl passwd -6 "<nuova_password>"`). I file in `unattended/` sono template con placeholder e vengono materializzati a runtime dagli script.
 
 ---
 

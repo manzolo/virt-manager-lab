@@ -6,7 +6,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
-REPO_DIR="$VM_BASE_DIR/virt-manager"
+# Il repo si individua dalla posizione dello script: la cartella del clone puo' chiamarsi come si vuole.
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 VM_NAME="tumbleweed"
 FIRSTBOOT_AUTOSTART="${FIRSTBOOT_AUTOSTART:-true}"
@@ -17,7 +18,7 @@ ISO_ORIG="$STORAGE/Iso/Distro/openSUSE-Tumbleweed-DVD-x86_64-Current.iso"
 ISO_AUTOYAST="$STORAGE/Iso/Distro/${VM_NAME}-autoyast.iso"
 ISO_URL="https://download.opensuse.org/tumbleweed/iso/openSUSE-Tumbleweed-DVD-x86_64-Current.iso"
 SHARED_DIR="$STORAGE/shared"
-AY_TEMPLATE="$REPO_DIR/tumbleweed-autoyast.xml"
+AY_TEMPLATE="$REPO_DIR/unattended/tumbleweed-autoyast.xml"
 
 if [[ ! -f "$ISO_ORIG" ]]; then
     echo "ISO Tumbleweed non trovata: $ISO_ORIG"

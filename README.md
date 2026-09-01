@@ -10,8 +10,10 @@ Il repo raccoglie tutto quello che serve per ricreare da zero le VM del lab: scr
 
 ```
 virt-manager-lab/
-├── Makefile                       # comandi install/start/shutdown/status per tutte le VM
+├── vms.tsv                        # REGISTRO VM: unica fonte di verita' dell'inventario
+├── Makefile                       # target generati dal registro (install/start/shutdown/status)
 ├── scripts/
+│   ├── vms-registry.sh            # lettura/validazione di vms.tsv (make check-registry)
 │   ├── lab.env                    # credenziali e percorsi centralizzati (VM_USER, VM_PASS, VM_BASE_DIR…)
 │   ├── install-debian13.sh        # Debian 13 unattended (preseed)
 │   ├── install-ubuntu24.04.sh     # Ubuntu 24.04 LTS unattended (autoinstall)
@@ -123,6 +125,44 @@ virsh pool-autostart hdd
 
 ## Installazione VM
 
+### Registro VM (`vms.tsv`)
+
+[`vms.tsv`](vms.tsv) e' l'**unica fonte di verita'** dell'inventario del lab.
+Una riga per VM, campi separati da TAB:
+
+| Campo | Significato |
+|--------|-------------|
+| `id` | ID breve del Makefile (`make <id>`, `make start-<id>`, ...) |
+| `vm` | nome del dominio libvirt (quello che vede `virsh`) |
+| `script` | script di installazione, path relativo alla root |
+| `family` | `linux` o `windows` — determina il flusso di test e2e |
+| `agent` | `yes`/`no` — la VM espone il canale QEMU guest agent |
+| `e2e` | `yes`/`no` — inclusa nei test end-to-end (se `no`, `note` = motivo) |
+| `group` | raggruppamento mostrato da `make help` |
+| `note` | descrizione libera |
+
+Da questo file sono **generati**, senza liste duplicate da tenere allineate a mano:
+
+- i target del Makefile (`make <id>`, `start-`, `shutdown-`, `clean-`, ...) e
+  l'output di `make help`, `make list`, `make status`;
+- `VMS` e `TEST_VMS`, usati da `make clean-all` e `make clean-test`;
+- gli item dei test e2e in `scripts/test-linux.env` e `scripts/test-win.env`;
+- la lista di script controllati dalla CI.
+
+#### Aggiungere una distro
+
+1. Scrivi lo script di installazione in `scripts/`.
+2. Aggiungi **una riga** a `vms.tsv`.
+3. `make check-registry` — valida id/nomi VM univoci, esistenza dello script,
+   campi ammessi, e segnala se manca la scheda in `vms/`.
+
+Non serve toccare il Makefile, gli `.env` dei test o la CI.
+
+```bash
+make check-registry        # valida il registro (girato anche in CI)
+make list                  # ID, nome VM libvirt, famiglia, descrizione
+```
+
 ### Uso con Makefile
 
 Il Makefile alla root raccoglie i comandi principali:
@@ -138,7 +178,9 @@ make start-win11
 make shutdown-win11
 ```
 
-ID disponibili: `debian13`, `ubuntu24`, `ubuntu26`, `lubuntu20`, `lubuntu22`, `lubuntu24`, `lubuntu26`, `kubuntu22`, `xubuntu22`, `mate22`, `budgie22`, `kubuntu24`, `xubuntu24`, `mate24`, `budgie24`, `kubuntu26`, `xubuntu26`, `mate26`, `budgie26`, `silverblue`, `rocky9`, `alma9`, `tumbleweed`, `arch`, `niri`, `win10`, `win11`, `win7u`.
+Gli ID disponibili **non sono elencati qui**: sono definiti in
+[`vms.tsv`](vms.tsv) e li stampa `make list` (oppure `make help`, che li
+raggruppa per famiglia). Vedi [Registro VM](#registro-vm-vmstsv).
 
 I profili `silverblue` (Fedora Silverblue immutabile, kickstart), `rocky9`,
 `alma9`, `tumbleweed`, `arch` (Arch Linux, GNOME) e `niri` (Arch +
@@ -452,8 +494,10 @@ make test-win       # solo VM Windows (default PAR=2)
   `graphical.target` + display-manager attivo → screenshot.
 - **Windows**: install → attesa del guest-agent (OOBE/autologon + virtio-win-guest-tools)
   → verifica via `cmd.exe` → screenshot. Windows 7 (senza canale agent) è screenshot-only.
-- Motore condiviso: `scripts/test-lib.sh`; configurazione in `scripts/test-linux.env` e
-  `scripts/test-win.env` (liste VM, parallelismo, timeout). Il report si auto-aggiorna ogni 15s.
+- Motore condiviso: `scripts/test-lib.sh`; parallelismo e timeout in
+  `scripts/test-linux.env` / `scripts/test-win.env`. Le **liste di VM** non stanno
+  li': sono derivate da [`vms.tsv`](vms.tsv) (colonna `e2e`). Il report si
+  auto-aggiorna ogni 15s.
 
 > Le VM con contratto non uniforme (es. Silverblue per via di SELinux sul guest-exec, e
 > niri sperimentale) restano in `TEST_EXCLUDED_ITEMS`.

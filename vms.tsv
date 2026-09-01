@@ -1,0 +1,49 @@
+# Registro delle VM del lab — UNICA fonte di verita'.
+#
+# Consumato da:
+#   Makefile             -> target install/start/stop/clean, make list, make status, make help
+#   scripts/test-linux.env -> TEST_ITEMS / TEST_EXCLUDED_ITEMS
+#   scripts/test-win.env   -> TEST_WIN_ITEMS / TEST_WIN_EXCLUDED_ITEMS
+#   scripts/vms-registry.sh --check -> validazione (girata anche in CI)
+#
+# Per aggiungere una VM basta aggiungere UNA riga qui (piu' lo script di install).
+#
+# Campi separati da TAB:
+#   id      ID breve usato dal Makefile (make <id>, make start-<id>, ...)
+#   vm      nome del dominio libvirt (quello che vede virsh)
+#   script  script di installazione, path relativo alla root del repo
+#   family  linux | windows  (determina il flusso di test e2e)
+#   agent   yes | no         (la VM espone il canale QEMU guest agent)
+#   e2e     yes | no         (inclusa nei test end-to-end; se no, note = motivo)
+#   group   raggruppamento mostrato da make help (senza spazi)
+#   note    descrizione libera; se e2e=no e' il motivo dell'esclusione
+#
+# id	vm	script	family	agent	e2e	group	note
+debian13	Debian13	scripts/install-debian13.sh	linux	yes	yes	Debian	Debian 13 Trixie (preseed)
+ubuntu24	ubuntu24.04	scripts/install-ubuntu24.04.sh	linux	yes	yes	Ubuntu	Ubuntu 24.04 LTS GNOME (autoinstall)
+ubuntu26	ubuntu26.04	scripts/install-ubuntu26.04.sh	linux	yes	yes	Ubuntu	Ubuntu 26.04 LTS GNOME (autoinstall)
+lubuntu20	lubuntu20.04	scripts/install-lubuntu20.04.sh	linux	yes	yes	Lubuntu	Lubuntu 20.04 LTS LXQt
+lubuntu22	lubuntu22.04	scripts/install-lubuntu22.04.sh	linux	yes	yes	Lubuntu	Lubuntu 22.04 LTS LXQt
+lubuntu24	lubuntu24.04	scripts/install-lubuntu24.04.sh	linux	yes	yes	Lubuntu	Lubuntu 24.04 LTS LXQt
+lubuntu26	lubuntu26.04	scripts/install-lubuntu26.04.sh	linux	yes	yes	Lubuntu	Lubuntu 26.04 LTS LXQt
+kubuntu22	kubuntu22.04	scripts/install-kubuntu22.04.sh	linux	yes	yes	Kubuntu	Kubuntu 22.04 LTS Plasma
+kubuntu24	kubuntu24.04	scripts/install-kubuntu24.04.sh	linux	yes	yes	Kubuntu	Kubuntu 24.04 LTS Plasma
+kubuntu26	kubuntu26.04	scripts/install-kubuntu26.04.sh	linux	yes	yes	Kubuntu	Kubuntu 26.04 LTS Plasma
+xubuntu22	xubuntu22.04	scripts/install-xubuntu22.04.sh	linux	yes	yes	Xubuntu	Xubuntu 22.04 LTS XFCE
+xubuntu24	xubuntu24.04	scripts/install-xubuntu24.04.sh	linux	yes	yes	Xubuntu	Xubuntu 24.04 LTS XFCE
+xubuntu26	xubuntu26.04	scripts/install-xubuntu26.04.sh	linux	yes	yes	Xubuntu	Xubuntu 26.04 LTS XFCE
+mate22	ubuntu-mate22.04	scripts/install-mate22.04.sh	linux	yes	yes	Ubuntu-MATE	Ubuntu MATE 22.04 LTS
+mate24	ubuntu-mate24.04	scripts/install-mate24.04.sh	linux	yes	yes	Ubuntu-MATE	Ubuntu MATE 24.04 LTS
+mate26	ubuntu-mate26.04	scripts/install-mate26.04.sh	linux	yes	yes	Ubuntu-MATE	Ubuntu MATE 26.04 LTS
+budgie22	ubuntu-budgie22.04	scripts/install-budgie22.04.sh	linux	yes	yes	Ubuntu-Budgie	Ubuntu Budgie 22.04 LTS
+budgie24	ubuntu-budgie24.04	scripts/install-budgie24.04.sh	linux	yes	yes	Ubuntu-Budgie	Ubuntu Budgie 24.04 LTS
+budgie26	ubuntu-budgie26.04	scripts/install-budgie26.04.sh	linux	yes	yes	Ubuntu-Budgie	Ubuntu Budgie 26.04 LTS
+rocky9	rocky9	scripts/install-rocky.sh	linux	yes	yes	Enterprise	Rocky Linux 9 (kickstart)
+alma9	alma9	scripts/install-alma.sh	linux	yes	yes	Enterprise	AlmaLinux 9 (kickstart)
+silverblue	silverblue	scripts/install-silverblue.sh	linux	yes	yes	Altri	Fedora Silverblue (immutabile)
+tumbleweed	tumbleweed	scripts/install-tumbleweed.sh	linux	yes	yes	Altri	openSUSE Tumbleweed (AutoYaST)
+arch	arch	scripts/install-arch.sh	linux	yes	yes	Altri	Arch Linux (bootstrap)
+niri	niri	scripts/install-niri.sh	linux	yes	yes	Altri	Arch + niri/noctalia (sperimentale)
+win10	Windows10	scripts/win10/create_win10_vm.sh	windows	yes	yes	Windows	Windows 10 (autounattend)
+win11	Windows11	scripts/win11/create_win11_vm.sh	windows	yes	yes	Windows	Windows 11 (autounattend, TPM+SecureBoot)
+win7u	Windows7U	scripts/win7u/create_win7u_vm.sh	windows	no	yes	Windows	Windows 7 Ultimate (nessun guest agent)

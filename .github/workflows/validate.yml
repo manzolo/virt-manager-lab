@@ -18,26 +18,70 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             xorriso python3-yaml libxml2-utils
 
+      # Il registro vms.tsv e' l'unica fonte di verita' dell'inventario VM:
+      # verifica id/nomi VM univoci, script esistenti, campi validi.
+      - name: VM registry
+        run: bash scripts/vms-registry.sh --check
+
+      # Il Makefile genera i propri target dal registro: se il parsing si rompe
+      # spariscono tutti i target, quindi lo si esercita esplicitamente.
+      - name: Makefile targets from registry
+        run: |
+          make help
+          make list
+          for id in $(bash scripts/vms-registry.sh --ids); do
+            make -n "install-$id" >/dev/null || { echo "target install-$id KO"; exit 1; }
+          done
+          echo "target generati OK per $(bash scripts/vms-registry.sh --ids | wc -l) VM"
+
+      # Gli item dei test e2e sono derivati dal registro: verifica che gli env
+      # si sourcino e producano le liste attese.
+      - name: Test env from registry
+        run: |
+          set -uo pipefail
+          source scripts/test-linux.env
+          source scripts/test-win.env
+          echo "linux: ${#TEST_ITEMS[@]}, windows: ${#TEST_WIN_ITEMS[@]}"
+          [ "${#TEST_ITEMS[@]}" -gt 0 ] && [ "${#TEST_WIN_ITEMS[@]}" -gt 0 ]
+        shell: bash
+
+      # Sintassi di TUTTI gli script del registro, non di una lista hardcoded.
       - name: Shell syntax
         run: |
-          bash -n scripts/install-ubuntu24.04.sh
-          bash -n scripts/install-ubuntu26.04.sh
-          bash -n scripts/install-debian13.sh
-          bash -n scripts/win11/create_win11_vm.sh
+          for s in $(awk -F'\t' '$1 ~ /^[a-z0-9]/ {print $3}' vms.tsv) \
+                   scripts/install-ubuntu-flavor22.04.sh \
+                   scripts/install-enterprise-linux.sh \
+                   scripts/vms-registry.sh \
+                   scripts/test-lib.sh scripts/test-all.sh \
+                   scripts/test-linux.sh scripts/test-win.sh \
+                   scripts/clean-vm.sh scripts/setup.sh; do
+            bash -n "$s" || { echo "syntax KO: $s"; exit 1; }
+          done
+          echo "shell syntax OK"
 
+      # I file con un placeholder da solo su una riga (es. __INSTALLER_PACKAGES__)
+      # sono template che diventano YAML valido solo dopo la sostituzione:
+      # si saltano esplicitamente invece di far fallire il job.
       - name: YAML autoinstall syntax
         run: |
-          python3 -c "import yaml; yaml.safe_load(open('ubuntu24.04-autoinstall.yaml'))" \
-            && echo "ubuntu24.04-autoinstall.yaml OK"
-          python3 -c "import yaml; yaml.safe_load(open('ubuntu26.04-autoinstall.yaml'))" \
-            && echo "ubuntu26.04-autoinstall.yaml OK"
+          for f in *-autoinstall.yaml; do
+            if grep -q '^__[A-Z_]*__$' "$f"; then
+              echo "$f SKIP (template, valido solo dopo il rendering)"
+              continue
+            fi
+            python3 -c "import yaml,sys; yaml.safe_load(open(sys.argv[1]))" "$f" \
+              && echo "$f OK"
+          done
 
-      - name: XML syntax (autounattend)
-        run: xmllint --noout scripts/win11/autounattend.xml && echo "autounattend.xml OK"
+      - name: XML syntax (autounattend / autoyast)
+        run: |
+          for f in scripts/win*/autounattend.xml tumbleweed-autoyast.xml; do
+            xmllint --noout "$f" && echo "$f OK"
+          done
 
       - name: Required files present
         run: |
           test -f Debian13-preseed.cfg           && echo "Debian13-preseed.cfg OK"
-          test -f ubuntu24.04-autoinstall.yaml   && echo "ubuntu24.04-autoinstall.yaml OK"
-          test -f ubuntu26.04-autoinstall.yaml   && echo "ubuntu26.04-autoinstall.yaml OK"
+          test -f enterprise-linux.ks            && echo "enterprise-linux.ks OK"
+          test -f vms.tsv                        && echo "vms.tsv OK"
           test -f scripts/win11/autounattend.xml && echo "autounattend.xml OK"

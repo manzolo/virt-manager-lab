@@ -3,69 +3,47 @@ SHELL := /usr/bin/env bash
 
 .DEFAULT_GOAL := help
 
-VMS := Debian13 ubuntu24.04 ubuntu26.04 lubuntu20.04 lubuntu22.04 lubuntu24.04 lubuntu26.04 kubuntu22.04 xubuntu22.04 ubuntu-mate22.04 ubuntu-budgie22.04 kubuntu24.04 xubuntu24.04 ubuntu-mate24.04 ubuntu-budgie24.04 kubuntu26.04 xubuntu26.04 ubuntu-mate26.04 ubuntu-budgie26.04 silverblue rocky9 alma9 tumbleweed arch niri Windows10 Windows11 Windows7U
+# =============================================================================
+# Registro VM — UNICA fonte di verita'. Per aggiungere una VM: una riga in
+# vms.tsv (piu' lo script di install). Non serve toccare questo Makefile.
+# =============================================================================
+REGISTRY ?= vms.tsv
 
-SCRIPT_debian13 := scripts/install-debian13.sh
-SCRIPT_ubuntu24 := scripts/install-ubuntu24.04.sh
-SCRIPT_ubuntu26 := scripts/install-ubuntu26.04.sh
-SCRIPT_lubuntu20 := scripts/install-lubuntu20.04.sh
-SCRIPT_lubuntu22 := scripts/install-lubuntu22.04.sh
-SCRIPT_lubuntu24 := scripts/install-lubuntu24.04.sh
-SCRIPT_lubuntu26 := scripts/install-lubuntu26.04.sh
-SCRIPT_kubuntu22 := scripts/install-kubuntu22.04.sh
-SCRIPT_xubuntu22 := scripts/install-xubuntu22.04.sh
-SCRIPT_mate22 := scripts/install-mate22.04.sh
-SCRIPT_budgie22 := scripts/install-budgie22.04.sh
-SCRIPT_kubuntu24 := scripts/install-kubuntu24.04.sh
-SCRIPT_xubuntu24 := scripts/install-xubuntu24.04.sh
-SCRIPT_mate24 := scripts/install-mate24.04.sh
-SCRIPT_budgie24 := scripts/install-budgie24.04.sh
-SCRIPT_kubuntu26 := scripts/install-kubuntu26.04.sh
-SCRIPT_xubuntu26 := scripts/install-xubuntu26.04.sh
-SCRIPT_mate26 := scripts/install-mate26.04.sh
-SCRIPT_budgie26 := scripts/install-budgie26.04.sh
-SCRIPT_win10 := scripts/win10/create_win10_vm.sh
-SCRIPT_win11 := scripts/win11/create_win11_vm.sh
-SCRIPT_win7u := scripts/win7u/create_win7u_vm.sh
-SCRIPT_silverblue := scripts/install-silverblue.sh
-SCRIPT_rocky9 := scripts/install-rocky.sh
-SCRIPT_alma9 := scripts/install-alma.sh
-SCRIPT_tumbleweed := scripts/install-tumbleweed.sh
-SCRIPT_arch := scripts/install-arch.sh
-SCRIPT_niri := scripts/install-niri.sh
+ifeq ($(wildcard $(REGISTRY)),)
+$(error Registro VM non trovato: $(REGISTRY))
+endif
 
-VM_debian13 := Debian13
-VM_ubuntu24 := ubuntu24.04
-VM_ubuntu26 := ubuntu26.04
-VM_lubuntu20 := lubuntu20.04
-VM_lubuntu22 := lubuntu22.04
-VM_lubuntu24 := lubuntu24.04
-VM_lubuntu26 := lubuntu26.04
-VM_kubuntu22 := kubuntu22.04
-VM_xubuntu22 := xubuntu22.04
-VM_mate22 := ubuntu-mate22.04
-VM_budgie22 := ubuntu-budgie22.04
-VM_kubuntu24 := kubuntu24.04
-VM_xubuntu24 := xubuntu24.04
-VM_mate24 := ubuntu-mate24.04
-VM_budgie24 := ubuntu-budgie24.04
-VM_kubuntu26 := kubuntu26.04
-VM_xubuntu26 := xubuntu26.04
-VM_mate26 := ubuntu-mate26.04
-VM_budgie26 := ubuntu-budgie26.04
-VM_win10 := Windows10
-VM_win11 := Windows11
-VM_win7u := Windows7U
-VM_silverblue := silverblue
-VM_rocky9 := rocky9
-VM_alma9 := alma9
-VM_tumbleweed := tumbleweed
-VM_arch := arch
-VM_niri := niri
+# Un record per VM: "id|vm|script|family|agent|e2e|group". Il campo 'note' ha
+# spazi e al Makefile non serve, quindi viene scartato. Le righe dati sono
+# quelle il cui primo campo inizia con [a-z0-9] (commenti e header iniziano con
+# il carattere di commento).
+RECORDS := $(shell awk -F'\t' '$$1 ~ /^[a-z0-9]/ && NF>=7 \
+	{print $$1"|"$$2"|"$$3"|"$$4"|"$$5"|"$$6"|"$$7}' $(REGISTRY))
 
-WINDOWS_IDS := win10 win11 win7u
+# $(1) e' il record con i campi separati da spazio. Nota: $(call) divide gli
+# argomenti PRIMA di espanderli, quindi non si possono generare $(2),$(3)... da
+# una sostituzione: i campi vanno letti con $(word N,...).
+define REGISTER_VM
+VM_$(word 1,$(1))     := $(word 2,$(1))
+SCRIPT_$(word 1,$(1)) := $(word 3,$(1))
+FAMILY_$(word 1,$(1)) := $(word 4,$(1))
+AGENT_$(word 1,$(1))  := $(word 5,$(1))
+E2E_$(word 1,$(1))    := $(word 6,$(1))
+GROUP_$(word 1,$(1))  := $(word 7,$(1))
+endef
+$(foreach r,$(RECORDS),$(eval $(call REGISTER_VM,$(subst |, ,$(r)))))
 
-.PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check
+IDS         := $(foreach r,$(RECORDS),$(firstword $(subst |, ,$(r))))
+VMS         := $(strip $(foreach id,$(IDS),$(VM_$(id))))
+WINDOWS_IDS := $(strip $(foreach id,$(IDS),$(if $(filter windows,$(FAMILY_$(id))),$(id))))
+TEST_VMS    := $(strip $(foreach id,$(IDS),$(if $(filter yes,$(E2E_$(id))),$(VM_$(id)))))
+
+# Deduplica preservando l'ordine del registro (a differenza di $(sort)).
+uniq   = $(if $(1),$(firstword $(1)) $(call uniq,$(filter-out $(firstword $(1)),$(1))))
+GROUPS = $(strip $(call uniq,$(foreach id,$(IDS),$(GROUP_$(id)))))
+ids_in_group = $(strip $(foreach id,$(IDS),$(if $(filter $(1),$(GROUP_$(id))),$(id))))
+
+.PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check check-registry
 help:
 	@printf '%s\n' \
 		'virt-manager-lab - gestione VM unattended' \
@@ -80,20 +58,11 @@ help:
 		'  make start-<id>           Avvia una VM, es. make start-lubuntu24' \
 		'  make shutdown-<id>        Spegne ordinatamente una VM' \
 		'' \
-		'PROFILI LINUX' \
-		'  Debian:      debian13' \
-		'  Ubuntu:      ubuntu24 ubuntu26' \
-		'  Lubuntu:     lubuntu20 lubuntu22 lubuntu24 lubuntu26' \
-		'  Kubuntu:     kubuntu22 kubuntu24 kubuntu26' \
-		'  Xubuntu:     xubuntu22 xubuntu24 xubuntu26' \
-		'  Ubuntu MATE: mate22 mate24 mate26' \
-		'  Budgie:      budgie22 budgie24 budgie26' \
-		'  Enterprise:  rocky9 alma9' \
-		'  Altri:       silverblue (Fedora immutabile) · tumbleweed · arch · niri' \
+		'PROFILI (generati da $(REGISTRY))'
+	@$(foreach g,$(GROUPS),printf '  %-14s %s\n' '$(g):' '$(call ids_in_group,$(g))';)
+	@printf '%s\n' \
 		'' \
-		'PROFILI WINDOWS' \
-		'  win10 win11 win7u' \
-		'  make iso-win11            Rigenera solo la ISO unattended Windows' \
+		'  make iso-<id>             Rigenera solo la ISO unattended (solo: $(WINDOWS_IDS))' \
 		'' \
 		'GESTIONE VM' \
 		'  make status-<id>          Dettaglio libvirt della VM gestita' \
@@ -104,6 +73,7 @@ help:
 		'  make clean-test           Pulisce solo le VM dei test e2e (con conferma)' \
 		'  make report               Rigenera vm-report.html' \
 		'  make cheatsheet           Rigenera docs/virsh-cheatsheet.pdf' \
+		'  make check-registry       Valida $(REGISTRY) (script mancanti, id duplicati, schede)' \
 		'  make v2p [VM=nome]        Scrive il disco di una VM su un disco FISICO (V2P, distruttivo)' \
 		'  make test-all [PAR=N]     Test e2e Linux + Windows, report unico (reinstall+verifica)' \
 		'  make test-linux [PAR=N]   Test e2e delle sole VM Linux' \
@@ -115,77 +85,24 @@ help:
 		'  make status-2 non esiste: usa virsh dominfo 2 se vuoi quel numero.'
 
 list:
-	@printf '%-10s %s\n' 'ID' 'VM'
-	@printf '%-10s %s\n' 'debian13' '$(VM_debian13)'
-	@printf '%-10s %s\n' 'ubuntu24' '$(VM_ubuntu24)'
-	@printf '%-10s %s\n' 'ubuntu26' '$(VM_ubuntu26)'
-	@printf '%-10s %s\n' 'lubuntu20' '$(VM_lubuntu20)'
-	@printf '%-10s %s\n' 'lubuntu22' '$(VM_lubuntu22)'
-	@printf '%-10s %s\n' 'lubuntu24' '$(VM_lubuntu24)'
-	@printf '%-10s %s\n' 'lubuntu26' '$(VM_lubuntu26)'
-	@printf '%-10s %s\n' 'kubuntu22' '$(VM_kubuntu22)'
-	@printf '%-10s %s\n' 'xubuntu22' '$(VM_xubuntu22)'
-	@printf '%-10s %s\n' 'mate22' '$(VM_mate22)'
-	@printf '%-10s %s\n' 'budgie22' '$(VM_budgie22)'
-	@printf '%-10s %s\n' 'kubuntu24' '$(VM_kubuntu24)'
-	@printf '%-10s %s\n' 'xubuntu24' '$(VM_xubuntu24)'
-	@printf '%-10s %s\n' 'mate24' '$(VM_mate24)'
-	@printf '%-10s %s\n' 'budgie24' '$(VM_budgie24)'
-	@printf '%-10s %s\n' 'kubuntu26' '$(VM_kubuntu26)'
-	@printf '%-10s %s\n' 'xubuntu26' '$(VM_xubuntu26)'
-	@printf '%-10s %s\n' 'mate26' '$(VM_mate26)'
-	@printf '%-10s %s\n' 'budgie26' '$(VM_budgie26)'
-	@printf '%-10s %s\n' 'win10' '$(VM_win10)'
-	@printf '%-10s %s\n' 'win11' '$(VM_win11)'
-	@printf '%-10s %s\n' 'win7u' '$(VM_win7u)'
-	@printf '%-10s %s\n' 'silverblue' '$(VM_silverblue)'
-	@printf '%-10s %s\n' 'rocky9' '$(VM_rocky9)'
-	@printf '%-10s %s\n' 'alma9' '$(VM_alma9)'
-	@printf '%-10s %s\n' 'tumbleweed' '$(VM_tumbleweed)'
-	@printf '%-10s %s\n' 'arch' '$(VM_arch)'
-	@printf '%-10s %s\n' 'niri' '$(VM_niri)'
+	@printf '%-12s %-20s %-8s %s\n' 'ID' 'VM' 'FAMILY' 'NOTE'
+	@awk -F'\t' '$$1 ~ /^[a-z0-9]/ {printf "%-12s %-20s %-8s %s\n", $$1, $$2, $$4, $$8}' $(REGISTRY)
 
 status:
 	virsh list --all
-	@printf '\n%s\n' 'VM gestite dal Makefile:'
-	@printf '%-10s %-14s %-10s %s\n' 'ID' 'VM' 'LibvirtId' 'Stato'
-	@for row in \
-		'debian13:$(VM_debian13)' \
-		'ubuntu24:$(VM_ubuntu24)' \
-		'ubuntu26:$(VM_ubuntu26)' \
-		'lubuntu20:$(VM_lubuntu20)' \
-		'lubuntu22:$(VM_lubuntu22)' \
-		'lubuntu24:$(VM_lubuntu24)' \
-		'lubuntu26:$(VM_lubuntu26)' \
-		'kubuntu22:$(VM_kubuntu22)' \
-		'xubuntu22:$(VM_xubuntu22)' \
-		'mate22:$(VM_mate22)' \
-		'budgie22:$(VM_budgie22)' \
-		'kubuntu24:$(VM_kubuntu24)' \
-		'xubuntu24:$(VM_xubuntu24)' \
-		'mate24:$(VM_mate24)' \
-		'budgie24:$(VM_budgie24)' \
-		'kubuntu26:$(VM_kubuntu26)' \
-		'xubuntu26:$(VM_xubuntu26)' \
-		'mate26:$(VM_mate26)' \
-		'budgie26:$(VM_budgie26)' \
-		'win10:$(VM_win10)' \
-		'win11:$(VM_win11)' \
-		'win7u:$(VM_win7u)' \
-		'silverblue:$(VM_silverblue)' \
-		'rocky9:$(VM_rocky9)' \
-		'alma9:$(VM_alma9)' \
-		'tumbleweed:$(VM_tumbleweed)' \
-		'arch:$(VM_arch)' \
-		'niri:$(VM_niri)'; do \
-		make_id="$${row%%:*}"; \
-		vm="$${row#*:}"; \
+	@printf '\n%s\n' 'VM gestite dal registro ($(REGISTRY)):'
+	@printf '%-12s %-20s %-10s %s\n' 'ID' 'VM' 'LibvirtId' 'Stato'
+	@for row in $(foreach r,$(RECORDS),'$(r)'); do \
+		make_id="$${row%%|*}"; rest="$${row#*|}"; vm="$${rest%%|*}"; \
 		libvirt_id="$$(virsh domid "$$vm" 2>/dev/null | head -n 1 || true)"; \
 		state="$$(virsh domstate "$$vm" 2>/dev/null | head -n 1 || true)"; \
 		[[ -n "$$libvirt_id" ]] || libvirt_id='-'; \
 		[[ -n "$$state" ]] || state='non definita'; \
-		printf '%-10s %-14s %-10s %s\n' "$$make_id" "$$vm" "$$libvirt_id" "$$state"; \
+		printf '%-12s %-20s %-10s %s\n' "$$make_id" "$$vm" "$$libvirt_id" "$$state"; \
 	done
+
+check-registry:
+	VMLAB_REGISTRY="$(REGISTRY)" bash scripts/vms-registry.sh --check
 
 setup:
 	bash scripts/setup.sh
@@ -208,17 +125,17 @@ v2p:
 
 # Test end-to-end completo (Linux + Windows) con un UNICO report HTML.
 # Parallelismo: make test-all PAR=3  (default 2, perche' include le Windows).
-# REINSTALLA tutte le VM elencate in test-linux.env e test-win.env.
+# REINSTALLA tutte le VM con e2e=yes nel registro.
 test-all:
 	bash scripts/test-all.sh $(PAR)
 
-# Test end-to-end delle VM Linux in test-linux.env (reinstall + verifica + report HTML).
-# Parallelismo: make test-linux PAR=6  (default 4). REINSTALLA le VM elencate.
+# Test end-to-end delle VM Linux con e2e=yes (reinstall + verifica + report HTML).
+# Parallelismo: make test-linux PAR=6  (default 4). REINSTALLA le VM coinvolte.
 test-linux:
 	bash scripts/test-linux.sh $(PAR)
 
-# Test end-to-end delle VM Windows in test-win.env (reinstall + verifica + report HTML).
-# Parallelismo: make test-win PAR=1  (default 2). REINSTALLA le VM elencate.
+# Test end-to-end delle VM Windows con e2e=yes (reinstall + verifica + report HTML).
+# Parallelismo: make test-win PAR=1  (default 2). REINSTALLA le VM coinvolte.
 test-win:
 	bash scripts/test-win.sh $(PAR)
 
@@ -260,56 +177,25 @@ clean-$(1):
 	bash scripts/clean-vm.sh "$$(VM_$(1))"
 endef
 
-$(eval $(call INSTALL_TARGETS,debian13))
-$(eval $(call INSTALL_TARGETS,ubuntu24))
-$(eval $(call INSTALL_TARGETS,ubuntu26))
-$(eval $(call INSTALL_TARGETS,lubuntu20))
-$(eval $(call INSTALL_TARGETS,lubuntu22))
-$(eval $(call INSTALL_TARGETS,lubuntu24))
-$(eval $(call INSTALL_TARGETS,lubuntu26))
-$(eval $(call INSTALL_TARGETS,kubuntu22))
-$(eval $(call INSTALL_TARGETS,xubuntu22))
-$(eval $(call INSTALL_TARGETS,mate22))
-$(eval $(call INSTALL_TARGETS,budgie22))
-$(eval $(call INSTALL_TARGETS,kubuntu24))
-$(eval $(call INSTALL_TARGETS,xubuntu24))
-$(eval $(call INSTALL_TARGETS,mate24))
-$(eval $(call INSTALL_TARGETS,budgie24))
-$(eval $(call INSTALL_TARGETS,kubuntu26))
-$(eval $(call INSTALL_TARGETS,xubuntu26))
-$(eval $(call INSTALL_TARGETS,mate26))
-$(eval $(call INSTALL_TARGETS,budgie26))
-$(eval $(call INSTALL_TARGETS,win10))
-$(eval $(call INSTALL_TARGETS,win11))
-$(eval $(call INSTALL_TARGETS,win7u))
-$(eval $(call INSTALL_TARGETS,silverblue))
-$(eval $(call INSTALL_TARGETS,rocky9))
-$(eval $(call INSTALL_TARGETS,alma9))
-$(eval $(call INSTALL_TARGETS,tumbleweed))
-$(eval $(call INSTALL_TARGETS,arch))
-$(eval $(call INSTALL_TARGETS,niri))
+$(foreach id,$(IDS),$(eval $(call INSTALL_TARGETS,$(id))))
 
-# Pulizia di tutte le VM gestite (VM + disco qcow2 principale, MAI ISO/altri dischi).
-# Chiede conferma perche' include anche le VM Windows (reinstall lunghe).
+# Pulizia di tutte le VM del registro (VM + disco qcow2 principale, MAI ISO/altri
+# dischi). Chiede conferma perche' include anche le Windows (reinstall lunghe).
 .PHONY: clean-all
 clean-all:
-	@echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale di TUTTE le VM gestite."
+	@echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale di TUTTE le VM del registro."
 	@echo "  ISO e volumi in altri pool NON vengono toccati."
 	@echo "  VM coinvolte: $(VMS)"
 	@read -rp "Confermi la rimozione di tutte? [s/N] " a; \
 	if [ "$$a" != "s" ] && [ "$$a" != "S" ]; then echo "Annullato."; exit 0; fi; \
 	for vm in $(VMS); do bash scripts/clean-vm.sh "$$vm"; done
 
-# Pulizia delle SOLE VM coperte dai test e2e (quelle in test-linux.env + test-win.env).
-# Ancorata agli env: resta corretta anche se l'inventario VMS diverge dai test.
+# Pulizia delle SOLE VM coperte dai test e2e (quelle con e2e=yes nel registro).
 .PHONY: clean-test
 clean-test:
-	@vms="$$( . scripts/test-linux.env; . scripts/test-win.env; \
-	  for it in "$${TEST_ITEMS[@]}"; do echo "$$it" | cut -d'|' -f2; done; \
-	  for it in "$${TEST_WIN_ITEMS[@]}"; do echo "$$it" | cut -d'|' -f2; done )"; \
-	echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale delle SOLE VM di test."; \
-	echo "  ISO e volumi in altri pool NON vengono toccati."; \
-	echo "  VM coinvolte: $$vms"; \
-	read -rp "Confermi la rimozione delle VM di test? [s/N] " a; \
+	@echo "ATTENZIONE: rimuove definizione VM + disco qcow2 principale delle SOLE VM di test."
+	@echo "  ISO e volumi in altri pool NON vengono toccati."
+	@echo "  VM coinvolte: $(TEST_VMS)"
+	@read -rp "Confermi la rimozione delle VM di test? [s/N] " a; \
 	if [ "$$a" != "s" ] && [ "$$a" != "S" ]; then echo "Annullato."; exit 0; fi; \
-	for vm in $$vms; do bash scripts/clean-vm.sh "$$vm"; done
+	for vm in $(TEST_VMS); do bash scripts/clean-vm.sh "$$vm"; done

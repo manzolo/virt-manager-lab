@@ -50,6 +50,7 @@ jobs:
         run: |
           for s in $(awk -F'\t' '$1 ~ /^[a-z0-9]/ {print $3}' vms.tsv) \
                    scripts/install-ubuntu-flavor22.04.sh \
+                   scripts/lib/subiquity-install.sh \
                    scripts/install-enterprise-linux.sh \
                    scripts/vms-registry.sh \
                    scripts/test-lib.sh scripts/test-all.sh \

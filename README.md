@@ -60,7 +60,7 @@ kickstart, AutoYaST, archiso, autounattend) e non passano dal motore subiquity.
 
 ```bash
 # 1. Clona il repo (in una cartella qualsiasi: gli script si orientano da soli)
-git clone https://github.com/manzolo/virt-manager-lab.git kvm-lab
+git clone https://github.com/manzolo/kvm-lab.git
 cd kvm-lab
 
 # 2. Installa dipendenze, crea pool/rete libvirt e scripts/lab.env (idempotente)

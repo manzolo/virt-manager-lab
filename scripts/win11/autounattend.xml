@@ -264,6 +264,12 @@
           <CommandLine>cmd /c sc config VirtioFsSvc start= auto &amp; net start VirtioFsSvc</CommandLine>
           <RequiresUserInput>false</RequiresUserInput>
         </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>5</Order>
+          <Description>Marker di fine setup per i test e2e (scripts/test-lib.sh)</Description>
+          <CommandLine>cmd /c echo done &gt; C:\lab-setup-done.txt</CommandLine>
+          <RequiresUserInput>false</RequiresUserInput>
+        </SynchronousCommand>
       </FirstLogonCommands>
 
     </component>

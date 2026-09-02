@@ -40,6 +40,14 @@ autoinstall:
   packages: []
 
   late-commands:
+    # Ubuntu 20.04 e' fuori supporto standard: il passo post-install di subiquity
+    # run_unattended_upgrades esce con errore 1 e l'installazione viene marcata
+    # fallita (2026-09-02, anche con lo script pre-refactor; a maggio passava).
+    # 'updates: none' non esiste nel subiquity 22.4 della ISO 20.04.6 (solo
+    # security|all), quindi si svuotano le origini di unattended-upgrades nel
+    # target: il passo gira, non trova nulla e ritorna 0. (\x23 = '#', per non
+    # aprire un commento YAML: '#clear' e' la direttiva apt che azzera la lista.)
+    - curtin in-target -- bash -c 'printf "\x23clear Unattended-Upgrade::Allowed-Origins;\nUnattended-Upgrade::Allowed-Origins {};\n" > /etc/apt/apt.conf.d/51-lab-no-unattended-upgrades'
     - curtin in-target -- bash -c "sed -i 's|main restricted$|main restricted universe multiverse|g' /etc/apt/sources.list"
     - curtin in-target -- apt-get update
     - curtin in-target -- env DEBIAN_FRONTEND=noninteractive apt-get install -y lubuntu-desktop plymouth-theme-lubuntu-logo qemu-guest-agent spice-vdagent openvpn network-manager-openvpn network-manager-openvpn-gnome bind9-dnsutils aspell aspell-it linux-generic-hwe-20.04

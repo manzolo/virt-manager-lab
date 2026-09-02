@@ -118,6 +118,33 @@ ga_run_win() {
   return 124
 }
 
+# Desktop Windows DAVVERO pronto. Il guest agent risponde gia' durante il setup
+# (SetupComplete.cmd su win10 e FirstLogonCommands su win11 installano
+# virtio-win-guest-tools prima della fine di OOBE), quindi guest-ping da solo
+# dava PASS a install a meta' e poi la VM veniva spenta nel mezzo del setup
+# (2026-09-02: PASS in 8 min con screenshot "Non spegnere il PC"). E anche con
+# OOBE finito ed explorer avviato, per qualche minuto il desktop e' coperto
+# dall'animazione di primo accesso (FirstLogonAnim.exe, "L'operazione potrebbe
+# richiedere alcuni minuti"). Servono tutti:
+#   1. C:\lab-setup-done.txt, scritto dall'ULTIMO passo dello script di setup
+#   2. OOBEInProgress = 0 nel registro (OOBE terminato)
+#   3. explorer.exe in esecuzione (sessione utente aperta dall'autologon)
+#   4. FirstLogonAnim.exe e LogonUI.exe NON in esecuzione (desktop visibile)
+# e il chiamante richiede due letture consecutive positive.
+win_desktop_ready() {
+  local vm="$1" out tl
+  ga_run_win "$vm" 'if exist C:\lab-setup-done.txt (echo PRESENT) else (echo MISSING)' 2>/dev/null | grep -q PRESENT || return 1
+  out="$(ga_run_win "$vm" 'reg query HKLM\SYSTEM\Setup /v OOBEInProgress' 2>/dev/null | tr -d '\r')"
+  grep -Eq 'OOBEInProgress +REG_DWORD +0x0$' <<<"$out" || return 1
+  # Niente filtro /FI tra virgolette: passando per cmd.exe /c via guest-exec le
+  # virgolette si perdono e tasklist non stampa nulla. Lista completa e grep qui.
+  tl="$(ga_run_win "$vm" 'tasklist /NH' 2>/dev/null | tr -d '\r')"
+  grep -qi '^explorer\.exe' <<<"$tl" || return 1
+  grep -qi '^FirstLogonAnim' <<<"$tl" && return 1
+  grep -qi '^LogonUI\.exe' <<<"$tl" && return 1
+  return 0
+}
+
 # Nome OS dal guest agent Windows (guest-get-osinfo -> pretty-name).
 ga_osname() {
   local vm="$1" js
@@ -232,7 +259,7 @@ run_one_linux() {
 # ---- pipeline Windows -----------------------------------------------------
 run_one_win() {
   local id="$1" vm="$2" script="$3" agent="$4"
-  local t0 status phase detail osname host tools shared s seen dl
+  local t0 status phase detail osname host tools shared s seen dl agent_seen ready_count
   t0=$(date +%s); status=""; phase=""; detail=""
   osname="-"; host="-"; tools="-"; shared="-"
 
@@ -260,11 +287,27 @@ run_one_win() {
     # Fase 2: install + OOBE + autologon + virtio-win-guest-tools -> guest agent up.
     _progress "$id" "$vm" "Windows" "RUNNING" "boot+tools" "$(( $(date +%s)-t0 ))" "install in corso, attendo il guest agent..."
     echo ">>> [$id] boot+tools $(date +%T)"
-    dl=$(( $(date +%s) + TEST_WIN_READY_TIMEOUT ))
+    dl=$(( $(date +%s) + TEST_WIN_READY_TIMEOUT )); agent_seen=0; ready_count=0
     while :; do
-      if ga_ready "$vm"; then status="PASS"; phase="desktop"; break; fi
+      if ga_ready "$vm"; then
+        if [ "$agent_seen" = 0 ]; then
+          agent_seen=1
+          _progress "$id" "$vm" "Windows" "RUNNING" "setup+oobe" "$(( $(date +%s)-t0 ))" "guest agent attivo: attendo fine setup, OOBE e autologon..."
+          echo ">>> [$id] agent up, attendo fine setup+OOBE $(date +%T)"
+        fi
+        if win_desktop_ready "$vm"; then
+          ready_count=$((ready_count + 1))
+          # Due letture consecutive (a distanza TEST_WIN_POLL) per non fotografare
+          # un istante di transizione fra animazione di primo accesso e desktop.
+          [ "$ready_count" -ge 2 ] && { status="PASS"; phase="desktop"; break; }
+        else
+          ready_count=0
+        fi
+      fi
       if [ "$(date +%s)" -ge "$dl" ]; then
-        if [ "$(vmstate "$vm")" = "running" ]; then
+        if [ "$agent_seen" = 1 ]; then
+          status="WARN"; phase="setup"; detail="guest agent attivo ma setup/OOBE/logon non completati entro ${TEST_WIN_READY_TIMEOUT}s (marker, OOBEInProgress, explorer.exe): verifica lo screenshot"
+        elif [ "$(vmstate "$vm")" = "running" ]; then
           status="WARN"; phase="boot"; detail="guest agent assente entro ${TEST_WIN_READY_TIMEOUT}s: verifica lo screenshot"
         else
           status="FAIL"; phase="install"; detail="VM non piu' in esecuzione e guest agent mai risposto (install fallita?)"

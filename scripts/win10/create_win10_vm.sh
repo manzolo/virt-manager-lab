@@ -92,6 +92,8 @@ call :run "Notepad++" "%TOOLROOT%\notepadpp-setup.exe" /S
 
 sc config VirtioFsSvc start= auto >> "%LOG%" 2>&1
 net start VirtioFsSvc >> "%LOG%" 2>&1
+rem Marker letto dai test e2e (scripts/test-lib.sh): "setup script finito".
+echo done > C:\lab-setup-done.txt
 exit /b 0
 
 :run

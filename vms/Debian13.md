@@ -72,13 +72,13 @@ Nessuna.
 La VM è replicabile da zero tramite:
 
 ```bash
-bash /home/manzolo/Workspaces/qemu/virt-manager/scripts/install-debian13.sh
+bash /home/manzolo/Workspaces/qemu/kvm-lab/scripts/install-debian13.sh
 ```
 
 File coinvolti:
 | File | Scopo |
 |------|-------|
-| `virt-manager/scripts/install-debian13.sh` | Script principale (scarica ISO se mancante, cancella VM esistente chiedendo conferma, ricostruisce ISO con preseed, lancia virt-install) |
+| `kvm-lab/scripts/install-debian13.sh` | Script principale (scarica ISO se mancante, cancella VM esistente chiedendo conferma, ricostruisce ISO con preseed, lancia virt-install) |
 | `unattended/Debian13-preseed.cfg` | Template preseed Debian: locale IT, utente da `scripts/lab.env`, standard task dal DVD, GNOME + Apache + Docker + dev tools via late_command dalla rete |
 | `storage/Iso/Distro/debian-13-preseed.iso` | ISO con preseed integrato (generata dallo script) |
 

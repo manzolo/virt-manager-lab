@@ -4,6 +4,16 @@
 #   bash scripts/setup.sh --check   SOLO verifica, non cambia nulla (exit !=0 se qualcosa manca)
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# lab.env non e' versionato (contiene la password delle VM): se manca lo si
+# crea dall'esempio, con --check si segnala soltanto.
+if [ ! -f "$SCRIPT_DIR/lab.env" ]; then
+    if [ "${1:-}" = "--check" ]; then
+        printf '  \033[31m!!\033[0m   scripts/lab.env mancante: copia scripts/lab.env.example e adattalo (o esegui make setup)\n'
+        exit 1
+    fi
+    cp "$SCRIPT_DIR/lab.env.example" "$SCRIPT_DIR/lab.env"
+    printf '  \033[33m++\033[0m   creato scripts/lab.env da lab.env.example: ADATTA VM_USER/VM_PASS/VM_PASS_HASH/VM_BASE_DIR\n'
+fi
 source "$SCRIPT_DIR/lab.env"
 STORAGE="$VM_BASE_DIR/storage"
 

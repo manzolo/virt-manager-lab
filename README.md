@@ -21,7 +21,7 @@ kvm-lab/
 │   ├── fedora-silverblue.ks #   kickstart Fedora Silverblue
 │   └── tumbleweed-autoyast.xml  # AutoYaST openSUSE
 ├── scripts/
-│   ├── lab.env              # credenziali e percorsi (VM_USER, VM_PASS, VM_BASE_DIR...)
+│   ├── lab.env.example      # credenziali e percorsi: copiato in lab.env (NON versionato) da make setup
 │   ├── vms-registry.sh      # lettura/validazione di vms.tsv (make check-registry)
 │   ├── lib/
 │   │   └── subiquity-install.sh   # MOTORE comune: ISO + disco + virt-install + first boot
@@ -63,8 +63,9 @@ kickstart, AutoYaST, archiso, autounattend) e non passano dal motore subiquity.
 git clone https://github.com/manzolo/virt-manager-lab.git kvm-lab
 cd kvm-lab
 
-# 2. Installa dipendenze e crea pool/rete libvirt (idempotente)
+# 2. Installa dipendenze, crea pool/rete libvirt e scripts/lab.env (idempotente)
 make setup
+#    -> poi adatta scripts/lab.env: utente/password delle VM e VM_BASE_DIR
 
 # 3. Verifica l'ambiente
 make setup-check
@@ -375,7 +376,7 @@ Ogni script installa un sistema GNOME completo con questi pacchetti aggiuntivi:
 | `aspell` | correttore ortografico |
 | `linux-generic-hwe-*` | kernel HWE più recente |
 
-Credenziali default: utente **`manzolo`**, password **`manzolo`** — per cambiarle modifica solo `scripts/lab.env` (rigenera `VM_PASS_HASH` con `openssl passwd -6 "<nuova_password>"`). I file in `unattended/` sono template con placeholder e vengono materializzati a runtime dagli script.
+Le credenziali delle VM stanno in `scripts/lab.env`, che **non e' versionato**: `make setup` lo crea da `scripts/lab.env.example` e va adattato (`VM_USER`, `VM_PASS`, `VM_PASS_HASH` rigenerato con `openssl passwd -6 "<password>"`, `VM_BASE_DIR`). I file in `unattended/` sono template con placeholder e vengono materializzati a runtime dagli script leggendo quel file.
 
 ---
 

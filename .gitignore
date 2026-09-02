@@ -20,3 +20,6 @@ vm-report.html
 
 # Cartelle di build temporanee
 win11_unattend_src/
+
+# Credenziali e percorsi locali (copia di scripts/lab.env.example, creata da make setup)
+scripts/lab.env

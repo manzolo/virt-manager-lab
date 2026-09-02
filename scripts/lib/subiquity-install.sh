@@ -46,6 +46,10 @@ SCRIPTS_DIR="$(cd "$_LIB_DIR/.." && pwd)"
 # cosi' la cartella del clone puo' chiamarsi come si vuole.
 REPO_DIR="$(cd "$SCRIPTS_DIR/.." && pwd)"
 
+[[ -f "$SCRIPTS_DIR/lab.env" ]] || {
+    echo "Manca scripts/lab.env: copia scripts/lab.env.example e adattalo (o esegui make setup)." >&2
+    exit 1
+}
 # shellcheck source=../lab.env
 source "$SCRIPTS_DIR/lab.env"
 

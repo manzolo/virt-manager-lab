@@ -96,5 +96,5 @@ via apt da `deb.debian.org` dopo che la rete è già attiva.
 - RNG: virtio
 - Memballoon: virtio
 - Boot menu abilitato
-- Utente e password da `scripts/lab.env` (default: `manzolo` / `manzolo`)
+- Utente e password da `scripts/lab.env` (non versionato: vedi lab.env.example)
 - **Apache2 e Docker CE installati e abilitati**

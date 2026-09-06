@@ -146,6 +146,9 @@ i servizi DNS/DHCP sono forniti da Pi-hole.
 
 **[Guida del laboratorio: topologia, regole recuperate, installazione e backup](docs/network-lab.md)**
 
+Scheda sintetica con schema di rete e flussi DNS/DHCP/NAT: [network-lab-schema.pdf](docs/network-lab-schema.pdf)
+(sorgente [HTML](docs/network-lab-schema.html), si rigenera con `weasyprint docs/network-lab-schema.html docs/network-lab-schema.pdf`).
+
 `make network-install` reinstalla da zero le tre VM con le personalizzazioni
 recuperate. `make network-plan` mostra l'anteprima; `make network-backup` salva
 le tre VM spente. Per collegare un altro client: `make network-attach VM=NOME_VM`.

@@ -7,12 +7,16 @@ disco VirtIO da 30 GB, guest agent e Spice abilitati.
 - Generazione: `make lab-lubuntu22`.
 - Il target preesistente `make lubuntu22` crea invece `lubuntu22.04`.
 - Disco nuovo: `$VM_BASE_DIR/storage/hd/lubuntu22-unattended.qcow2`.
-- Hostname `lubuntu`; NIC `enp1s0` sulla rete `lab-lan`.
+- Hostname `lubuntu`; NIC `enp1s0` sulla rete `lab-lan`. Il nome è fissato dal netplan
+  con `match` sul MAC e `set-name`: senza, il device virtiofs sposta la NIC in `enp2s0`
+  e l'IP statico non si applica.
 - IP statico originale conservato: `192.168.0.100/24`.
 - Gateway: `192.168.0.1` (pfSense).
 - DNS: `192.168.0.10` (Pi-hole).
 - Utente e autologin: `VM_USER`; password `VM_PASS`, da `scripts/lab.env`.
-- Nessuna cartella condivisa aggiunta.
+- Cartella condivisa dell'host `storage/shared` via virtiofs (tag `host_shared`),
+  montata su `/mnt/shared` con automount e linkata come `~/shared` e sul desktop,
+  come nelle altre VM Ubuntu del lab (aggiunta il 6 settembre 2026).
 - `systemd-networkd` e `systemd-networkd-wait-online` disabilitati dall'installer:
   con renderer NetworkManager allungavano ogni boot di 120 s. Boot misurato: 6,7 s.
 

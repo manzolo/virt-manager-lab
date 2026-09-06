@@ -98,9 +98,29 @@ class NetworkLabTest(unittest.TestCase):
         self.assertEqual(final["nameservers"]["addresses"], [self.p["pihole"]["ip"]])
 
     def test_preserves_lubuntu_static_address(self):
-        config = yaml.safe_load(installer.final_netplan("lubuntu", self.p))["network"]
+        config = yaml.safe_load(installer.final_netplan("lubuntu", self.p, "52:54:00:11:22:33"))["network"]
         self.assertEqual(config["renderer"], "NetworkManager")
         self.assertEqual(config["ethernets"]["enp1s0"]["addresses"], ["192.168.0.100/24"])
+        # Il nome dell'interfaccia deve seguire il MAC, non lo slot PCI: con la cartella
+        # condivisa virtiofs la NIC diventava enp2s0 e la VM finiva in DHCP.
+        self.assertEqual(config["ethernets"]["enp1s0"]["match"], {"macaddress": "52:54:00:11:22:33"})
+        self.assertEqual(config["ethernets"]["enp1s0"]["set-name"], "enp1s0")
+
+    def test_only_lubuntu_mounts_host_shared_folder(self):
+        env = {"VM_USER": "tester", "VM_PASS": "pw", "VM_PASS_HASH": "$6$test"}
+        with patch.dict(os.environ, env):
+            lubuntu = yaml.safe_load(installer.ubuntu_config("lubuntu", self.p, "52:54:00:11:22:33"))["autoinstall"]
+            pihole = yaml.safe_load(installer.ubuntu_config("pihole", self.p, "52:54:00:11:22:33"))["autoinstall"]
+        fstab = [c for c in lubuntu["late-commands"] if "/etc/fstab" in c]
+        self.assertEqual(len(fstab), 1)
+        self.assertIn("host_shared\\t/mnt/shared\\tvirtiofs", fstab[0])
+        self.assertTrue(any("/home/tester/Scrivania/shared" in c for c in lubuntu["late-commands"]))
+        self.assertFalse(any("shared" in c for c in pihole["late-commands"]))
+        with tempfile.TemporaryDirectory() as tmp:
+            args = installer.shared_virt_install_args(Path(tmp) / "shared")
+            self.assertTrue((Path(tmp) / "shared").is_dir())
+        self.assertIn("source.type=memfd,access.mode=shared", args)
+        self.assertIn("target.dir=host_shared,driver.type=virtiofs", args[3])
 
     def test_lubuntu_finalize_disables_networkd_wait_online(self):
         # Con renderer NetworkManager, systemd-networkd-wait-online non ha link da attendere

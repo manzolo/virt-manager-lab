@@ -41,10 +41,13 @@ def write(path, content, mode=0o600):
     path.chmod(mode)
 
 
-def final_netplan(role, p):
+def final_netplan(role, p, mac):
+    # match sul MAC + set-name: il nome enp1s0 non dipende dall'ordine degli slot PCI, che cambia
+    # se virt-install aggiunge altri device (es. il filesystem virtiofs della cartella condivisa).
     return yaml.safe_dump({"network": {"version": 2,
         "renderer": "NetworkManager" if role == "lubuntu" else "networkd",
-        "ethernets": {"enp1s0": {"dhcp4": False, "dhcp6": False,
+        "ethernets": {"enp1s0": {"match": {"macaddress": mac}, "set-name": "enp1s0",
+            "dhcp4": False, "dhcp6": False,
             "addresses": [p[role]["ip"] + "/" + str(ipaddress.ip_network(p['lan']['subnet']).prefixlen)],
             "routes": [{"to": "default", "via": p["pfsense"]["ip"]}],
             "nameservers": {"addresses": [p["pihole"]["ip"]], "search": [p["domain"]]}}}}}, sort_keys=False)
@@ -86,6 +89,22 @@ def cloud_file(path, content, permissions="0600"):
             "content": base64.b64encode(content.encode()).decode()}
 
 
+def shared_late_commands(user):
+    """Cartella condivisa dell'host (storage/shared) via virtiofs, come negli altri autoinstall Ubuntu:
+    tag host_shared montato su /mnt/shared con automount, link 'shared' in home e sul desktop."""
+    return ["curtin in-target -- mkdir -p /mnt/shared",
+            "curtin in-target -- bash -c 'printf \"host_shared\\t/mnt/shared\\tvirtiofs\\tnofail,x-systemd.automount,x-systemd.idle-timeout=60\\t0\\t0\\n\" >> /etc/fstab'",
+            "curtin in-target -- mkdir -p /etc/skel/Scrivania /etc/skel/Desktop",
+            "curtin in-target -- ln -sfn /mnt/shared /etc/skel/shared",
+            "curtin in-target -- ln -sfn /mnt/shared /etc/skel/Scrivania/shared",
+            "curtin in-target -- ln -sfn /mnt/shared /etc/skel/Desktop/shared",
+            f"curtin in-target -- bash -c 'if [ -d /home/{user} ]; then mkdir -p /home/{user}/Scrivania /home/{user}/Desktop; "
+            f"chown -R {user}:{user} /home/{user}/Scrivania /home/{user}/Desktop; "
+            f"runuser -u {user} -- ln -sfn /mnt/shared /home/{user}/shared; "
+            f"runuser -u {user} -- ln -sfn /mnt/shared /home/{user}/Scrivania/shared; "
+            f"runuser -u {user} -- ln -sfn /mnt/shared /home/{user}/Desktop/shared; fi'"]
+
+
 def ubuntu_config(role, p, mac):
     user, password, password_hash = credentials()
     ai = {"version": 1, "locale": "it_IT.UTF-8", "keyboard": {"layout": "it"},
@@ -99,7 +118,7 @@ def ubuntu_config(role, p, mac):
           "packages": ["qemu-guest-agent", "curl", "ca-certificates", "dnsutils"],
           "late-commands": ["curtin in-target -- systemctl enable qemu-guest-agent"],
           "shutdown": "poweroff"}
-    files = [cloud_file("/root/kvm-lab/lan.yaml", final_netplan(role, p))]
+    files = [cloud_file("/root/kvm-lab/lan.yaml", final_netplan(role, p, mac))]
     if role == "pihole":
         files += [cloud_file("/root/kvm-lab/pihole.toml", pihole_toml(p)),
                   cloud_file("/root/kvm-lab/adlists.list", (DATA / "pihole-adlists.list").read_text()),
@@ -109,7 +128,7 @@ def ubuntu_config(role, p, mac):
     else:
         ai["packages"] += ["lubuntu-desktop", "spice-vdagent", "arc-theme"]
         ai["late-commands"] += ["curtin in-target -- systemctl set-default graphical.target",
-                                "curtin in-target -- systemctl enable sddm"]
+                                "curtin in-target -- systemctl enable sddm"] + shared_late_commands(user)
         files.append(cloud_file("/etc/sddm.conf.d/kvm-lab-autologin.conf",
                                 f"[Autologin]\nUser={user}\nSession=Lubuntu\n"))
         commands = [["bash", "-c", "mkdir -p /var/lib/kvm-lab; touch /var/lib/kvm-lab/ready"]]
@@ -259,6 +278,13 @@ def connect_lan(name, p, tmp):
     net.virsh("define", str(path), "--validate")
 
 
+def shared_virt_install_args(shared_dir):
+    """virtiofs richiede la memoria del guest su memfd condiviso; il tag host_shared e' quello atteso dall'fstab."""
+    shared_dir.mkdir(parents=True, exist_ok=True)
+    return ["--memorybacking", "source.type=memfd,access.mode=shared",
+            "--filesystem", f"source.dir={shared_dir},target.dir=host_shared,driver.type=virtiofs,accessmode=passthrough"]
+
+
 def install(role, iso_only=False):
     p = net.profile()
     credentials()
@@ -319,6 +345,8 @@ def install(role, iso_only=False):
                      "--serial", f"file,path={serial}"]
         else:
             args += ["--channel", "unix,target.type=virtio,target.name=org.qemu.guest_agent.0"]
+        if role == "lubuntu":
+            args += shared_virt_install_args(base / "shared")
         subprocess.run(args, check=True)
         print(f"Installazione {name} su disco vuoto in corso...", flush=True)
         wait_stopped(name)

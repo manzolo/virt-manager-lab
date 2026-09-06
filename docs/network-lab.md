@@ -189,6 +189,7 @@ sudo systemctl disable --now systemd-networkd-wait-online.service systemd-networ
 | DNS pubblico e HTTPS da Lubuntu | Risoluzione riuscita; risposta HTTP 200 da `https://example.org` |
 | DHCP DISCOVER/REQUEST di prova | ACK `.182`, server `.10`, gateway `.1`, DNS `.10`; lease poi rilasciata |
 | Desktop Lubuntu | Sessione utente, LXQt panel e Openbox attivi; autologin riuscito |
+| Cartella condivisa Lubuntu | `/mnt/shared` (virtiofs `host_shared`) montata, contenuto di `storage/shared` visibile |
 | Boot Lubuntu | 6,7 s (`systemd-analyze`); prima del fix 2 min 8 s, spesi in `systemd-networkd-wait-online` |
 | Test locali e CI | 9 test delle configurazioni, registro VM, sintassi Python/Bash e ShellCheck |
 

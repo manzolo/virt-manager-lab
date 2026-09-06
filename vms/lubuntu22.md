@@ -18,7 +18,7 @@ disco VirtIO da 30 GB, guest agent e Spice abilitati.
   montata su `/mnt/shared` con automount e linkata come `~/shared` e sul desktop,
   come nelle altre VM Ubuntu del lab (aggiunta il 6 settembre 2026).
 - `systemd-networkd` e `systemd-networkd-wait-online` disabilitati dall'installer:
-  con renderer NetworkManager allungavano ogni boot di 120 s. Boot misurato: 6,7 s.
+  con renderer NetworkManager allungavano ogni boot di 120 s. Boot misurato: 7,7 s dopo reinstallazione da zero del 6 settembre 2026.
 
 Il profilo NetworkManager originale confermava gateway pfSense e DNS Pi-hole;
 la NIC libvirt era collegata a `default`. Il disco originale è conservato;

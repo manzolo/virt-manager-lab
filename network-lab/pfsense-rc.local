@@ -1,0 +1,22 @@
+#!/bin/sh
+# Entry point dell'ISO unattended: nessuna domanda sulla console.
+# rc.local viene caricato dall'rc di FreeBSD: non propagare nounset al chiamante.
+if ! mdconfig -l | grep -q md3; then
+    mdconfig -a -u 3 -s 8m
+    newfs /dev/md3
+    mount /dev/md3 /mnt
+    tar -C /etc -cf - . | tar -C /mnt -xf -
+    sync
+    umount /mnt
+    mount /dev/md3 /etc
+fi
+export TERM=xterm
+mkdir -p /tmp/bsdinstall_etc
+if bsdinstall script /etc/installerconfig </dev/null; then
+    echo KVM_LAB_INSTALL_OK > /dev/cuau0
+    /sbin/shutdown -p now
+else
+    echo KVM_LAB_INSTALL_FAILED > /dev/cuau0
+    cat /tmp/bsdinstall_log > /dev/cuau0
+    # Resta disponibile sulla console per la diagnosi; l'host rileva il timeout.
+fi

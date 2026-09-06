@@ -1,0 +1,51 @@
+{
+  "lan": {
+    "name": "lab-lan",
+    "bridge": "virbr-lab",
+    "subnet": "192.168.0.0/24",
+    "host": "192.168.0.254"
+  },
+  "wan": "default",
+  "domain": "qlan",
+  "pfsense": {
+    "source": "pfSense",
+    "name": "pfSense",
+    "ip": "192.168.0.1"
+  },
+  "pihole": {
+    "source": "pi-hole",
+    "name": "pi-hole",
+    "ip": "192.168.0.10",
+    "interface": "enp1s0",
+    "upstream": [
+      "208.67.222.222",
+      "208.67.220.220"
+    ]
+  },
+  "dhcp": {
+    "enabled": true,
+    "start": "192.168.0.150",
+    "end": "192.168.0.199",
+    "lease_hours": 24
+  },
+  "observed": {
+    "date": "2026-09-06",
+    "pfsense_version": "2.7.2",
+    "pihole_core_version": "5.17.3",
+    "pihole_ftl_version": "5.25.1",
+    "pfsense_dhcp": false,
+    "pihole_dhcp": false,
+    "lubuntu": {
+      "name": "lubuntu22",
+      "interface": "enp1s0",
+      "ip": "192.168.0.100/24",
+      "gateway": "192.168.0.1",
+      "dns": "192.168.0.10"
+    }
+  },
+  "lubuntu": {
+    "source": "lubuntu22",
+    "name": "lubuntu22",
+    "ip": "192.168.0.100"
+  }
+}

@@ -1,69 +1,21 @@
 # pfSense
 
-## Identificazione
+Installazione da zero verificata il 6 settembre 2026: pfSense CE 2.7.2,
+BIOS, ZFS, 2 vCPU, 2 GB RAM, disco VirtIO da 20 GB.
 
-| Campo   | Valore                                   |
-|---------|------------------------------------------|
-| Nome    | pfSense                                  |
-| UUID    | 9b73adaa-17fc-4e19-afc5-55e64b688cd0    |
-| OS      | pfSense CE 2.7.x (FreeBSD 12.4)         |
-| Stato   | terminato                                |
+- Generazione: `make pfsense` (richiede l'ISO locale e `make network-up`).
+- Disco nuovo: `$VM_BASE_DIR/storage/hd/pfSense-unattended.qcow2`.
+- WAN `vtnet0`: DHCP sulla rete libvirt `default`.
+- LAN `vtnet1`: `192.168.0.1/24` sulla rete isolata `lab-lan`.
+- NAT automatico; DHCP pfSense disabilitato; DNS di sistema Pi-hole `.10`.
+- Regola attiva: blocca TCP verso `192.168.1.50:22` dalla LAN.
+- Regola disattivata conservata: blocca TCP da `192.168.0.220`.
+- GUI: http://192.168.0.1 (utente `VM_USER`, password `VM_PASS` di `lab.env`).
+- Account integrato `admin` conservato, password `VM_PASS`.
+- Nessun guest agent; console SPICE e log seriale.
 
-## Hardware
+La vecchia VM aveva 1 GB RAM/1 vCPU ed entrambe le NIC su `default`.
+Il disco originale è conservato; il backup è stato eliminato su richiesta
+dell'utente dopo l'approvazione della nuova VM.
 
-| Risorsa   | Valore               |
-|-----------|----------------------|
-| RAM       | 1 GB (1048576 KiB)   |
-| vCPU      | 1                    |
-| Arch      | x86_64               |
-| Machine   | pc-i440fx-kinetic    |
-| Firmware  | BIOS                 |
-| CPU mode  | host-passthrough     |
-| Clock     | UTC                  |
-
-## Storage
-
-| Dispositivo | File                                                         | Bus    | Formato | Dimensione |
-|-------------|--------------------------------------------------------------|--------|---------|------------|
-| vda (disco) | `/home/manzolo/Workspaces/qemu/storage/hd/pfsense.qcow2`    | virtio | qcow2   | 1.3 GB     |
-| hda (cdrom) | —                                                            | ide    | raw     | —          |
-
-## Rete
-
-| NIC | MAC               | Modello | Rete    | Ruolo       |
-|-----|-------------------|---------|---------|-------------|
-| 1   | 52:54:00:5d:ba:e3 | virtio  | default | WAN         |
-| 2   | 52:54:00:ad:31:d6 | virtio  | default | LAN         |
-
-> Doppia interfaccia di rete come da configurazione tipica pfSense.
-
-## Video & Audio
-
-| Componente | Valore  |
-|------------|---------|
-| Video      | QXL     |
-| Audio      | ich6    |
-| Display    | SPICE   |
-
-## Cartella condivisa
-
-Nessuna.
-
-## Stato sistema (rilevato offline via virt-inspector)
-
-| Campo       | Valore                                               |
-|-------------|------------------------------------------------------|
-| OS rilevato | Non rilevato (FreeBSD/pfSense non supportato)        |
-| Hostname    | —                                                    |
-| App rilevate| 0                                                    |
-
-> virt-inspector non supporta il filesystem UFS di FreeBSD/pfSense.  
-> Lo snapshot "Funzionante" del 2025-08-26 indica che era operativo.
-
-## Note
-
-- Chipset legacy i440fx (non Q35)
-- USB controller: ich9-ehci1
-- Memballoon: virtio
-- Nessun guest agent
-- virt-inspector non supporta FreeBSD/UFS
+Vedi [configurazioni recuperate e riproduzione](../docs/network-lab.md).

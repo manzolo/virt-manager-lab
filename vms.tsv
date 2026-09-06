@@ -12,7 +12,7 @@
 #   id      ID breve usato dal Makefile (make <id>, make start-<id>, ...)
 #   vm      nome del dominio libvirt (quello che vede virsh)
 #   script  script di installazione, path relativo alla root del repo
-#   family  linux | windows  (determina il flusso di test e2e)
+#   family  linux | windows | bsd (determina il flusso di test e2e)
 #   agent   yes | no         (la VM espone il canale QEMU guest agent)
 #   e2e     yes | no         (inclusa nei test end-to-end; se no, note = motivo)
 #   group   raggruppamento mostrato da make help (senza spazi)
@@ -47,3 +47,6 @@ niri	niri	scripts/install-niri.sh	linux	yes	yes	Altri	Arch + niri/noctalia (sper
 win10	Windows10	scripts/win10/create_win10_vm.sh	windows	yes	yes	Windows	Windows 10 (autounattend)
 win11	Windows11	scripts/win11/create_win11_vm.sh	windows	yes	yes	Windows	Windows 11 (autounattend, TPM+SecureBoot)
 win7u	Windows7U	scripts/win7u/create_win7u_vm.sh	windows	no	yes	Windows	Windows 7 Ultimate (nessun guest agent)
+pfsense	pfSense	scripts/install-pfsense.sh	bsd	no	no	Rete	pfSense unattended ZFS; test rete dedicati, senza guest agent
+pihole	pi-hole	scripts/install-pihole.sh	linux	yes	no	Rete	Pi-hole v6 headless da zero; esclusa dai test desktop distruttivi
+lab-lubuntu22	lubuntu22	scripts/install-lab-lubuntu22.sh	linux	yes	no	Rete	Lubuntu da zero con IP statico e gateway pfSense

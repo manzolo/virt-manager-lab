@@ -1,76 +1,22 @@
 # lubuntu22
 
-## Identificazione
+Client del laboratorio reinstallato da zero il 6 settembre 2026:
+Ubuntu Server 22.04.5 + `lubuntu-desktop`, BIOS/Q35, 2 vCPU, 2 GB RAM,
+disco VirtIO da 30 GB, guest agent e Spice abilitati.
 
-| Campo   | Valore                                   |
-|---------|------------------------------------------|
-| Nome    | lubuntu22                                |
-| UUID    | 8d64ff0b-db4a-4653-a409-1ad90ab41e4f    |
-| OS      | Lubuntu 22.04                            |
-| Stato   | terminato                                |
+- Generazione: `make lab-lubuntu22`.
+- Il target preesistente `make lubuntu22` crea invece `lubuntu22.04`.
+- Disco nuovo: `$VM_BASE_DIR/storage/hd/lubuntu22-unattended.qcow2`.
+- Hostname `lubuntu`; NIC `enp1s0` sulla rete `lab-lan`.
+- IP statico originale conservato: `192.168.0.100/24`.
+- Gateway: `192.168.0.1` (pfSense).
+- DNS: `192.168.0.10` (Pi-hole).
+- Utente e autologin: `VM_USER`; password `VM_PASS`, da `scripts/lab.env`.
+- Nessuna cartella condivisa aggiunta.
 
-## Hardware
+Il profilo NetworkManager originale confermava gateway pfSense e DNS Pi-hole;
+la NIC libvirt era collegata a `default`. Il disco originale è conservato;
+il backup è stato eliminato su richiesta dell'utente dopo l'approvazione della
+nuova VM. I file personali precedenti non vengono copiati sulla VM nuova.
 
-| Risorsa   | Valore           |
-|-----------|------------------|
-| RAM       | 2 GB (2097152 KiB) |
-| vCPU      | 2                |
-| Arch      | x86_64           |
-| Machine   | pc-q35-7.0       |
-| Firmware  | BIOS             |
-| CPU mode  | host-passthrough |
-| Clock     | UTC              |
-
-## Storage
-
-| Dispositivo | File                                                          | Bus    | Formato | Dimensione |
-|-------------|---------------------------------------------------------------|--------|---------|------------|
-| vda (disco) | `/home/manzolo/Workspaces/qemu/storage/hd/lubuntu22.qcow2`   | virtio | qcow2   | 17 GB      |
-| sda (cdrom) | —                                                             | sata   | raw     | —          |
-
-## Rete
-
-| NIC | MAC               | Modello | Rete    |
-|-----|-------------------|---------|---------|
-| 1   | 52:54:00:58:89:b1 | virtio  | default |
-
-## Video & Audio
-
-| Componente | Valore  |
-|------------|---------|
-| Video      | QXL     |
-| Audio      | ich9    |
-| Display    | SPICE   |
-
-## Cartella condivisa
-
-Nessuna.
-
-## Stato sistema (rilevato offline via virt-inspector)
-
-| Campo       | Valore                        |
-|-------------|-------------------------------|
-| OS rilevato | Ubuntu 22.04.5 LTS (Lubuntu)  |
-| Hostname    | lubuntu                       |
-| Pacchetti   | 1782 (apt)                    |
-
-### Pacchetti notevoli
-
-- `compton 1`, `compton-conf 0.16.0` — compositor LXQt
-- `2048-qt` — gioco incluso di default in Lubuntu
-- `arc-theme` — tema UI installato
-- `chafa 1.8.0`, `caca-utils` — tool da terminale
-- Stack standard Lubuntu/LXQt (bluedevil, breeze, ecc.)
-- `btrfs-progs`, `bindfs` presenti
-
-> Hostname **lubuntu** (default Lubuntu).  
-> Installazione standard Lubuntu 22.04, nessuna personalizzazione evidente oltre al tema.
-
-## Note
-
-- Controller SCSI aggiuntivo: virtio-scsi
-- Guest Agent abilitato
-- Watchdog: itco
-- RNG: virtio
-- Memballoon: virtio
-- **Installazione base Lubuntu** — hostname di default, nessun software aggiuntivo rilevante
+Vedi [topologia e procedure](../docs/network-lab.md).

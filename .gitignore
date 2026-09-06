@@ -23,3 +23,7 @@ win11_unattend_src/
 
 # Credenziali e percorsi locali (copia di scripts/lab.env.example, creata da make setup)
 scripts/lab.env
+
+# Backup locali delle definizioni VM (possono contenere dati riservati)
+.local/
+__pycache__/

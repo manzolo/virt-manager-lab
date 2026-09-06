@@ -29,6 +29,7 @@ declare -A PKG=(
   [qemu-system-x86]=qemu-system-x86_64 [qemu-utils]=qemu-img [virtinst]=virt-install
   [virt-viewer]=remote-viewer [libvirt-daemon-system]="" [libvirt-clients]=virsh [xorriso]=xorriso [wget]=wget
   [libguestfs-tools]=virt-customize [imagemagick]=convert [python3]=python3 [ovmf]="" [virtiofsd]="" [sshpass]=sshpass
+  [python3-yaml]="" [python3-bcrypt]="" [dvd+rw-tools]=growisofs
 )
 missing=()
 for pkg in "${!PKG[@]}"; do

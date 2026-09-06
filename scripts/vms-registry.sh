@@ -70,8 +70,8 @@ cmd_check() {
 
         [ -f "$REPO_DIR/$script" ] || { echo "ERRORE riga $lineno ($id): script mancante '$script'" >&2; errors=$((errors+1)); }
 
-        case "$family" in linux|windows) ;;
-            *) echo "ERRORE riga $lineno ($id): family '$family' non valida (linux|windows)" >&2; errors=$((errors+1)) ;;
+        case "$family" in linux|windows|bsd) ;;
+            *) echo "ERRORE riga $lineno ($id): family '$family' non valida (linux|windows|bsd)" >&2; errors=$((errors+1)) ;;
         esac
         case "$agent" in yes|no) ;;
             *) echo "ERRORE riga $lineno ($id): agent '$agent' non valido (yes|no)" >&2; errors=$((errors+1)) ;;

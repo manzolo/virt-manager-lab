@@ -117,6 +117,41 @@ virsh pool-autostart hdd
 
 ---
 
+## Laboratori con rete dedicata
+
+### pfSense + Pi-hole + Lubuntu
+
+Questo laboratorio riproduce una piccola rete con firewall, switch virtuale,
+server DNS/DHCP e client. La LAN dedicata **`lab-lan` (`192.168.0.0/24`)** collega
+le VM scelte; la rete libvirt `default` fornisce la WAN di pfSense e continua
+a servire le altre VM.
+
+```mermaid
+flowchart LR
+    WAN["default · NAT libvirt"] --> FW["pfSense · gateway .1"]
+    FW --> LAN["lab-lan · switch virtuale"]
+    LAN --- DNS["Pi-hole · DNS/DHCP .10"]
+    LAN --- CLIENT["Lubuntu .100 e altri client"]
+```
+
+| Componente | Indirizzo LAN | Funzione |
+|---|---|---|
+| pfSense | `192.168.0.1` | Gateway, NAT e regole firewall; WAN via DHCP su `default` |
+| Pi-hole v6 | `192.168.0.10` | DNS e DHCP, pool `.150`–`.199` |
+| lubuntu22 | `192.168.0.100` | Client statico: gateway `.1`, DNS `.10` |
+| Host | `192.168.0.254` | Accesso alle interfacce di gestione sulla LAN |
+
+Su `lab-lan` libvirt non offre NAT, DNS o DHCP: l'uscita passa da pfSense e
+i servizi DNS/DHCP sono forniti da Pi-hole.
+
+**[Guida del laboratorio: topologia, regole recuperate, installazione e backup](docs/network-lab.md)**
+
+`make network-install` reinstalla da zero le tre VM con le personalizzazioni
+recuperate. `make network-plan` mostra l'anteprima; `make network-backup` salva
+le tre VM spente. Per collegare un altro client: `make network-attach VM=NOME_VM`.
+
+---
+
 ## Installazione VM
 
 ### Registro VM (`vms.tsv`)
@@ -129,7 +164,7 @@ Una riga per VM, campi separati da TAB:
 | `id` | ID breve del Makefile (`make <id>`, `make start-<id>`, ...) |
 | `vm` | nome del dominio libvirt (quello che vede `virsh`) |
 | `script` | script di installazione, path relativo alla root |
-| `family` | `linux` o `windows` — determina il flusso di test e2e |
+| `family` | `linux`, `windows` o `bsd` — determina il flusso di test e2e; le appliance di rete sono escluse dai test desktop |
 | `agent` | `yes`/`no` — la VM espone il canale QEMU guest agent |
 | `e2e` | `yes`/`no` — inclusa nei test end-to-end (se `no`, `note` = motivo) |
 | `group` | raggruppamento mostrato da `make help` |

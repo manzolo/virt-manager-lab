@@ -42,8 +42,9 @@ TEST_VMS    := $(strip $(foreach id,$(IDS),$(if $(filter yes,$(E2E_$(id))),$(VM_
 uniq   = $(if $(1),$(firstword $(1)) $(call uniq,$(filter-out $(firstword $(1)),$(1))))
 GROUPS = $(strip $(call uniq,$(foreach id,$(IDS),$(GROUP_$(id)))))
 ids_in_group = $(strip $(foreach id,$(IDS),$(if $(filter $(1),$(GROUP_$(id))),$(id))))
+ISO_IDS := $(WINDOWS_IDS) $(call ids_in_group,Rete)
 
-.PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check check-registry
+.PHONY: help list status report cheatsheet v2p test-all test-linux test-win setup setup-check check-registry network-plan network-up network-attach network-backup network-install
 help:
 	@printf '%s\n' \
 		'kvm-lab - VM KVM/QEMU installate in modo unattended' \
@@ -51,6 +52,11 @@ help:
 		'USO RAPIDO' \
 		'  make setup                Installa dipendenze + pool/rete libvirt (idempotente)' \
 		'  make setup-check          Verifica l'\''ambiente (sola lettura, exit !=0 se manca qualcosa)' \
+		'  make network-plan         Topologia pfSense + Pi-hole e configurazione LAN' \
+		'  make network-backup       Backup completo delle tre VM originali, spente' \
+		'  make network-up           Crea lo switch LAN isolato (senza DHCP libvirt)' \
+		'  make network-install      Installa da zero pfSense, Pi-hole e Lubuntu del lab' \
+		'  make network-attach VM=x  Collega una VM spenta alla LAN, salvando il suo XML' \
 		'  make list                 Mostra ID Makefile e nomi VM libvirt' \
 		'  make status               Stato libvirt + mappa ID Makefile' \
 		'  make <id>                 Installa/crea una VM, es. make win11' \
@@ -62,7 +68,7 @@ help:
 	@$(foreach g,$(GROUPS),printf '  %-14s %s\n' '$(g):' '$(call ids_in_group,$(g))';)
 	@printf '%s\n' \
 		'' \
-		'  make iso-<id>             Rigenera solo la ISO unattended (solo: $(WINDOWS_IDS))' \
+		'  make iso-<id>             Genera solo la ISO unattended (solo: $(ISO_IDS))' \
 		'' \
 		'GESTIONE VM' \
 		'  make status-<id>          Dettaglio libvirt della VM gestita' \
@@ -110,6 +116,25 @@ setup:
 setup-check:
 	bash scripts/setup.sh --check
 
+network-plan:
+	bash scripts/network-lab.sh plan
+
+network-up:
+	bash scripts/network-lab.sh up
+
+network-backup:
+	bash scripts/network-lab.sh backup
+
+network-install:
+	bash scripts/network-lab.sh up
+	bash scripts/install-pfsense.sh
+	bash scripts/install-pihole.sh
+	bash scripts/install-lab-lubuntu22.sh
+
+network-attach:
+	@test -n "$(VM)" || { echo 'Uso: make network-attach VM=nome-libvirt'; exit 2; }
+	bash scripts/network-lab.sh attach "$(VM)" --apply
+
 report:
 	bash scripts/vm-report.sh vm-report.html
 
@@ -151,8 +176,8 @@ reinstall-$(1):
 	printf 'S\n' | bash $$(SCRIPT_$(1))
 
 iso-$(1):
-	@if [[ " $$(WINDOWS_IDS) " != *" $(1) "* ]]; then \
-		echo "Il target iso-$(1) e' disponibile solo per: $$(WINDOWS_IDS)"; \
+	@if [[ " $$(ISO_IDS) " != *" $(1) "* ]]; then \
+		echo "Il target iso-$(1) e' disponibile solo per: $$(ISO_IDS)"; \
 		exit 2; \
 	fi
 	bash $$(SCRIPT_$(1)) --iso-only

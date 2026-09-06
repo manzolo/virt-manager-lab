@@ -16,7 +16,10 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            xorriso python3-yaml libxml2-utils
+            xorriso python3-yaml python3-bcrypt libxml2-utils
+
+      - name: Network lab configuration and safety checks
+        run: python3 -m unittest discover -s tests -p 'test_network_lab.py'
 
       # Il registro vms.tsv e' l'unica fonte di verita' dell'inventario VM:
       # verifica id/nomi VM univoci, script esistenti, campi validi.

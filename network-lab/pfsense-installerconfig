@@ -1,0 +1,35 @@
+# pfSense CE 2.7.2: bsdinstall script, disco VirtIO vuoto, BIOS + ZFS.
+export DISTRIBUTIONS="base.txz"
+export BSDINSTALL_DISTDIR="/usr/freebsd-dist"
+export nonInteractive="YES"
+export ZFSBOOT_DISKS="vtbd0"
+export ZFSBOOT_POOL_NAME="pfSense"
+export ZFSBOOT_VDEV_TYPE="stripe"
+export ZFSBOOT_PARTITION_SCHEME="GPT"
+export ZFSBOOT_BOOT_TYPE="BIOS"
+export ZFSBOOT_SWAP_SIZE="1g"
+export ZFSBOOT_CONFIRM_LAYOUT=""
+export ZFSBOOT_DATASETS="
+/ROOT mountpoint=none
+/ROOT/default mountpoint=/
+/ROOT/default/cf mountpoint=/cf,setuid=off,exec=off
+/tmp mountpoint=/tmp,exec=on,setuid=off
+/home mountpoint=/home
+/var mountpoint=/var
+/var/cache mountpoint=/var/cache,setuid=off,exec=off,compression=off
+/var/db mountpoint=/var/db,setuid=off,exec=off
+/var/empty mountpoint=/var/empty
+/var/log mountpoint=/var/log,setuid=off,exec=off
+/var/tmp mountpoint=/var/tmp,setuid=off
+/ROOT/default/var_cache_pkg mountpoint=/var/cache/pkg,setuid=off,exec=off
+/ROOT/default/var_db_pkg mountpoint=/var/db/pkg,setuid=off,exec=off
+"
+#!/bin/sh
+set -eu
+mkdir -p /cf/conf
+cat > /cf/conf/config.xml <<'KVM_LAB_CONFIG'
+__PFSENSE_CONFIG__
+KVM_LAB_CONFIG
+chmod 600 /cf/conf/config.xml
+mkdir -p /var/db/kvm-lab
+touch /var/db/kvm-lab/installed

@@ -102,6 +102,17 @@ class NetworkLabTest(unittest.TestCase):
         self.assertEqual(config["renderer"], "NetworkManager")
         self.assertEqual(config["ethernets"]["enp1s0"]["addresses"], ["192.168.0.100/24"])
 
+    def test_lubuntu_finalize_disables_networkd_wait_online(self):
+        # Con renderer NetworkManager, systemd-networkd-wait-online non ha link da attendere
+        # e allungherebbe ogni boot di 120 s (timeout): va disabilitato.
+        script = installer.finalize_script("lubuntu", self.p)
+        self.assertIn("systemctl disable systemd-networkd-wait-online.service", script)
+        self.assertIn("/etc/netplan/01-lab.yaml", script)
+        self.assertTrue(script.endswith("echo network-config-ready"))
+        pihole = installer.finalize_script("pihole", self.p)
+        self.assertNotIn("wait-online", pihole)
+        self.assertIn("pihole-FTL --config dhcp.active", pihole)
+
 
 if __name__ == "__main__":
     unittest.main()

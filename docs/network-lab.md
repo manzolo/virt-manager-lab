@@ -163,6 +163,21 @@ python3 scripts/lab-network.py pfsense-config \
 Il risultato va ripristinato dalla GUI pfSense. Lo script rimpiazza le sezioni
 di rete; usare una nuova installazione, non un firewall con altre LAN da mantenere.
 
+## Avvio lento di Lubuntu (risolto)
+
+La base Ubuntu Server abilita `systemd-networkd-wait-online`. Quando la fase finale
+dell'installer sostituisce il netplan con `01-lab.yaml` (renderer NetworkManager,
+IP statico), networkd non gestisce più nessun link e wait-online resta in attesa
+fino al timeout di 120 s, poi fallisce: il boot durava oltre 2 minuti con
+`A start job is running for Wait for Network to be Configured` in console.
+Dal 6 settembre 2026 `finalize_script()` in `scripts/install-network-vm.py`
+disabilita wait-online, `systemd-networkd.service` e il suo socket sul solo ruolo
+lubuntu (Pi-hole resta su networkd). Su una VM già installata basta:
+
+```bash
+sudo systemctl disable --now systemd-networkd-wait-online.service systemd-networkd.service systemd-networkd.socket
+```
+
 ## Verifiche eseguite sulle nuove VM
 
 | Controllo | Risultato |
@@ -174,7 +189,8 @@ di rete; usare una nuova installazione, non un firewall con altre LAN da mantene
 | DNS pubblico e HTTPS da Lubuntu | Risoluzione riuscita; risposta HTTP 200 da `https://example.org` |
 | DHCP DISCOVER/REQUEST di prova | ACK `.182`, server `.10`, gateway `.1`, DNS `.10`; lease poi rilasciata |
 | Desktop Lubuntu | Sessione utente, LXQt panel e Openbox attivi; autologin riuscito |
-| Test locali e CI | 8 test delle configurazioni, registro VM, sintassi Python/Bash e ShellCheck |
+| Boot Lubuntu | 6,7 s (`systemd-analyze`); prima del fix 2 min 8 s, spesi in `systemd-networkd-wait-online` |
+| Test locali e CI | 9 test delle configurazioni, registro VM, sintassi Python/Bash e ShellCheck |
 
 I test delle configurazioni non avviano né reinstallano VM:
 

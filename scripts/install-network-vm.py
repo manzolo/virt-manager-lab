@@ -217,6 +217,22 @@ def guest_exec(name, script, timeout=30):
     raise TimeoutError(f"Guest-exec non concluso per {name}")
 
 
+def finalize_script(role, p):
+    """Script eseguito nel guest al primo avvio, via guest agent, prima del collegamento alla LAN."""
+    script = ("set -e; rm -f /etc/netplan/*.yaml; "
+              "install -m 0600 /root/kvm-lab/lan.yaml /etc/netplan/01-lab.yaml; "
+              "printf 'network: {config: disabled}\\n' > /etc/cloud/cloud.cfg.d/99-kvm-lab-network.cfg; ")
+    if role == "pihole":
+        script += f"systemctl stop pihole-FTL; pihole-FTL --config dhcp.active {str(p['dhcp']['enabled']).lower()}; "
+    else:
+        # lan.yaml passa a renderer NetworkManager: networkd non gestisce piu' nessun link, ma il suo
+        # wait-online (abilitato dalla base Ubuntu Server) resterebbe attivo e, senza link da attendere,
+        # bloccherebbe il boot per 120 s fino al timeout. Lo si disabilita insieme a networkd.
+        script += ("systemctl disable systemd-networkd-wait-online.service "
+                   "systemd-networkd.service systemd-networkd.socket; ")
+    return script + "echo network-config-ready"
+
+
 def wait_ready(name, timeout=3600):
     end = time.monotonic() + timeout
     while time.monotonic() < end:
@@ -319,13 +335,7 @@ def install(role, iso_only=False):
         net.virsh("start", name)
         print(f"Primo avvio {name}: applicazione configurazione...", flush=True)
         wait_ready(name)
-        finalize = ("set -e; rm -f /etc/netplan/*.yaml; "
-                    "install -m 0600 /root/kvm-lab/lan.yaml /etc/netplan/01-lab.yaml; "
-                    "printf 'network: {config: disabled}\\n' > /etc/cloud/cloud.cfg.d/99-kvm-lab-network.cfg; ")
-        if role == "pihole":
-            finalize += f"systemctl stop pihole-FTL; pihole-FTL --config dhcp.active {str(p['dhcp']['enabled']).lower()}; "
-        finalize += "echo network-config-ready"
-        code, output = guest_exec(name, finalize)
+        code, output = guest_exec(name, finalize_script(role, p))
         if code:
             raise ValueError(f"Configurazione finale {name} fallita: {output}")
         net.virsh("shutdown", name)

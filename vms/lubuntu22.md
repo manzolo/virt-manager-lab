@@ -13,6 +13,8 @@ disco VirtIO da 30 GB, guest agent e Spice abilitati.
 - DNS: `192.168.0.10` (Pi-hole).
 - Utente e autologin: `VM_USER`; password `VM_PASS`, da `scripts/lab.env`.
 - Nessuna cartella condivisa aggiunta.
+- `systemd-networkd` e `systemd-networkd-wait-online` disabilitati dall'installer:
+  con renderer NetworkManager allungavano ogni boot di 120 s. Boot misurato: 6,7 s.
 
 Il profilo NetworkManager originale confermava gateway pfSense e DNS Pi-hole;
 la NIC libvirt era collegata a `default`. Il disco originale è conservato;
